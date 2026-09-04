@@ -34,6 +34,9 @@ type Tab = 'office' | 'bookings'
 export default function OwnerShell() {
   const [tab, setTab] = useState<Tab>('office')
   const [dept, setDept] = useState<PlatformId | null>(null)
+  /* Bumped on close so the office lets go of the platform it flew to;
+     without it the same department could only ever be opened once. */
+  const [resetFocus, setResetFocus] = useState(0)
   const [brainOpen, setBrainOpen] = useState(false)
   const { bookings, covers, unseen, loading, error, markSeen } = useBookings()
 
@@ -41,6 +44,13 @@ export default function OwnerShell() {
     setDept('bookings')
     markSeen()
   }, [markSeen])
+
+  const closeDept = useCallback(() => {
+    setDept(null)
+    setResetFocus((n) => n + 1)
+  }, [])
+
+  const openDept = useCallback((id: PlatformId) => setDept(id), [])
 
   /* Opening the runsheet is what "reading" a booking means, however you got
      there — the tab, the office platform, or the notification itself. */
@@ -60,7 +70,7 @@ export default function OwnerShell() {
             className={`shell__tab${tab === 'office' && !dept ? ' is-on' : ''}`}
             onClick={() => {
               setTab('office')
-              setDept(null)
+              closeDept()
             }}
           >
             Office
@@ -83,7 +93,8 @@ export default function OwnerShell() {
         <AgentOffice
           daysLearned={DAYS_LEARNED}
           onOpenBrain={() => setBrainOpen(true)}
-          onOpenDepartment={(id) => setDept(id)}
+          onOpenDepartment={openDept}
+          resetFocus={resetFocus}
         />
       </main>
 
@@ -91,7 +102,7 @@ export default function OwnerShell() {
         <Popup
           eyebrow={dept === 'bookings' ? 'Today · The Peacock' : 'Department'}
           title={DEPARTMENTS[dept].title}
-          onClose={() => setDept(null)}
+          onClose={closeDept}
         >
           {dept === 'bookings' ? (
             <RunSheet bookings={bookings} covers={covers} loading={loading} error={error} />

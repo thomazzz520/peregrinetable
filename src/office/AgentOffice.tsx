@@ -61,6 +61,10 @@ export interface AgentOfficeProps {
    *  camera still flies to the platform underneath; the popup is what the
    *  owner reads, the zoom is what tells them where they are. */
   onOpenDepartment?: (id: PlatformId) => void;
+  /** Bump this to send the camera back to the wide view — the host does it
+   *  when a department popup closes, so clicking the same platform again
+   *  opens it again instead of doing nothing. */
+  resetFocus?: number;
   /** How long the brain has been learning this venue. Drives its density. */
   daysLearned?: number;
   className?: string;
@@ -1216,18 +1220,30 @@ export default function AgentOffice({
   onSelect,
   onOpenBrain,
   onOpenDepartment,
+  resetFocus = 0,
   daysLearned = 120,
   className = "",
 }: AgentOfficeProps) {
   const box = useRef<HTMLDivElement>(null);
   const [focus, setFocus] = useState<PlatformId | null>(null);
 
+  /* Held in a ref so the effect below depends on `focus` alone. Hosts pass
+     an inline arrow here, which is a new function every render — as a
+     dependency it re-fired the effect constantly and a popup could never be
+     closed, because closing it re-rendered and opened it straight back. */
+  const openDept = useRef(onOpenDepartment);
+  openDept.current = onOpenDepartment;
+
   /* Focus is the camera's business; the popup is the host's. Watching focus
      rather than wiring a second click keeps the two in step however the
      platform came to be selected. */
   useEffect(() => {
-    if (focus) onOpenDepartment?.(focus);
-  }, [focus, onOpenDepartment]);
+    if (focus) openDept.current?.(focus);
+  }, [focus]);
+
+  useEffect(() => {
+    if (resetFocus > 0) setFocus(null);
+  }, [resetFocus]);
 
   useEffect(() => {
     if (document.getElementById("agent-office-keyframes")) return;
