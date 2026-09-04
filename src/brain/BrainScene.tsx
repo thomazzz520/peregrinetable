@@ -111,6 +111,24 @@ function CentreTarget({ onOpen, moved }: { onOpen: () => void; moved: React.RefO
   )
 }
 
+/**
+ * A WebGL canvas mounted on page load sometimes never reaches the screen:
+ * it is sized correctly and three really is drawing into it, but the
+ * compositor keeps showing an empty layer until something forces a fresh
+ * layout pass. Nudging a resize once the canvas is up costs nothing and
+ * makes it reliable. The floor plan never showed this because it mounts
+ * after the guest has clicked through the form, which forces layout anyway.
+ */
+function FirstPaint() {
+  const { gl } = useThree()
+  useEffect(() => {
+    const kick = () => window.dispatchEvent(new Event('resize'))
+    const t = [0, 120, 400].map((ms) => window.setTimeout(kick, ms))
+    return () => t.forEach(window.clearTimeout)
+  }, [gl])
+  return null
+}
+
 /** Eases the camera in and out, and opens the chat on the way in. */
 function CameraRig({ zoomed, onArrive }: { zoomed: boolean; onArrive: () => void }) {
   const { camera } = useThree()
@@ -172,6 +190,7 @@ export default function BrainScene({
       onPointerUp={() => (dragging.current = false)}
       onPointerLeave={() => (dragging.current = false)}
     >
+      <FirstPaint />
       <CameraRig zoomed={zoomed} onArrive={onArrive} />
       <Constellation days={days} dragging={dragging} rot={rot} />
       <CentreTarget onOpen={onOpen} moved={moved} />
