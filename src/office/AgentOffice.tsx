@@ -61,6 +61,11 @@ export interface AgentOfficeProps {
    *  camera still flies to the platform underneath; the popup is what the
    *  owner reads, the zoom is what tells them where they are. */
   onOpenDepartment?: (id: PlatformId) => void;
+  /** Fired when the building under the brain is clicked — "step inside",
+   *  which opens the room itself. Deliberately a different action from
+   *  clicking the brain above it: one is for looking at the venue, the
+   *  other is for talking to the team. */
+  onEnterVenue?: () => void;
   /** Bump this to send the camera back to the wide view — the host does it
    *  when a department popup closes, so clicking the same platform again
    *  opens it again instead of doing nothing. */
@@ -1220,6 +1225,7 @@ export default function AgentOffice({
   onSelect,
   onOpenBrain,
   onOpenDepartment,
+  onEnterVenue,
   resetFocus = 0,
   daysLearned = 120,
   className = "",
@@ -1233,6 +1239,17 @@ export default function AgentOffice({
      closed, because closing it re-rendered and opened it straight back. */
   const openDept = useRef(onOpenDepartment);
   openDept.current = onOpenDepartment;
+
+  /* HubBuilding still announces itself with a CustomEvent, from back when
+     there was no host to hand a callback to. Listen for it rather than
+     rewiring the scene graph — the event is the one path that already
+     works from inside the Canvas. */
+  useEffect(() => {
+    if (!onEnterVenue) return;
+    const enter = () => onEnterVenue();
+    window.addEventListener("agentoffice-house", enter);
+    return () => window.removeEventListener("agentoffice-house", enter);
+  }, [onEnterVenue]);
 
   /* Focus is the camera's business; the popup is the host's. Watching focus
      rather than wiring a second click keeps the two in step however the

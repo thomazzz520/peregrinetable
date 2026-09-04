@@ -5,6 +5,8 @@ import Popup from './Popup'
 import RunSheet from './RunSheet'
 import { useBookings } from './useBookings'
 import { GlanceCard, RevenueCard, ReviewCard } from '../dashboard/Cards'
+import { NewsPanel, RevenuePanel, TrafficPanel, WeatherPanel } from '../dashboard/Panels'
+import VenueFloor from '../dashboard/VenueFloor'
 import TaskPanel from '../dashboard/TaskPanel'
 import '../dashboard/dashboard.css'
 import './shell.css'
@@ -12,19 +14,27 @@ import '../brain/brain.css'
 
 /**
  * The owner side of the product: one frame, one navigation, one entry
- * point. The office is the home screen; departments open as click-in
- * popups over it; the brain opens a conversation.
+ * point. The office is the home screen; everything else is something you
+ * click into and close again.
  *
  * The guest-facing floor plan is not in here on purpose. It is a different
  * product for a different person that happens to share this database —
- * see `/` for that.
+ * see `/book` for that.
  */
 
 const DAYS_LEARNED = 120
 
-/** Copy for each department popup. Bookings is the one with a live panel. */
-const DEPARTMENTS: Record<PlatformId, { title: string; blurb: string }> = {
-  bookings: { title: 'Bookings', blurb: "Today's runsheet, straight off the diary guests book into." },
+/** Everything that can open over the office. */
+type View =
+  | { kind: 'dept'; id: PlatformId }
+  | { kind: 'revenue' }
+  | { kind: 'weather' }
+  | { kind: 'traffic' }
+  | { kind: 'news' }
+  | { kind: 'room' }
+
+const DEPT_COPY: Record<PlatformId, { title: string; blurb: string }> = {
+  bookings: { title: 'Bookings', blurb: '' },
   finance: { title: 'Finance', blurb: 'Takings, reconciliation, GST set aside, BAS.' },
   suppliers: { title: 'Suppliers & stock', blurb: 'Ordering, price watch, and what runs out next.' },
   roster: { title: 'Roster', blurb: 'Next week built from availability, skills and your labour budget.' },
@@ -32,41 +42,80 @@ const DEPARTMENTS: Record<PlatformId, { title: string; blurb: string }> = {
   admin: { title: 'Admin', blurb: 'Compliance, insurance, licences and the paperwork nobody enjoys.' },
 }
 
-type Tab = 'office' | 'bookings'
-
 export default function OwnerShell() {
-  const [tab, setTab] = useState<Tab>('office')
-  const [dept, setDept] = useState<PlatformId | null>(null)
+  const [view, setView] = useState<View | null>(null)
+  const [brainOpen, setBrainOpen] = useState(false)
   /* Bumped on close so the office lets go of the platform it flew to;
      without it the same department could only ever be opened once. */
   const [resetFocus, setResetFocus] = useState(0)
-  const [brainOpen, setBrainOpen] = useState(false)
   const { bookings, covers, unseen, loading, error, markSeen } = useBookings()
 
-  const openBookings = useCallback(() => {
-    setDept('bookings')
-    markSeen()
-  }, [markSeen])
-
-  const closeDept = useCallback(() => {
-    setDept(null)
+  const close = useCallback(() => {
+    setView(null)
     setResetFocus((n) => n + 1)
   }, [])
 
-  const openDept = useCallback((id: PlatformId) => setDept(id), [])
+  const openDept = useCallback((id: PlatformId) => setView({ kind: 'dept', id }), [])
+  const openRunSheet = useCallback(() => setView({ kind: 'dept', id: 'bookings' }), [])
 
   /* Opening the runsheet is what "reading" a booking means, however you got
-     there — the tab, the office platform, or the notification itself. */
+     there — the office platform or the notification itself. */
+  const onRunSheet = view?.kind === 'dept' && view.id === 'bookings'
   useEffect(() => {
-    if (dept === 'bookings') markSeen()
-  }, [dept, markSeen])
+    if (onRunSheet) markSeen()
+  }, [onRunSheet, markSeen])
+
+  const head = (): { eyebrow: string; title: string } => {
+    if (!view) return { eyebrow: '', title: '' }
+    switch (view.kind) {
+      case 'dept':
+        return {
+          eyebrow: view.id === 'bookings' ? 'Today · The Peacock' : 'Department',
+          title: DEPT_COPY[view.id].title,
+        }
+      case 'revenue':
+        return { eyebrow: 'Today · The Peacock · Square till', title: 'Revenue' }
+      case 'weather':
+        return { eyebrow: 'South Yarra · seven days', title: 'Weather' }
+      case 'traffic':
+        return { eyebrow: 'Chapel Street · this week', title: 'Foot traffic' }
+      case 'news':
+        return { eyebrow: 'What lands on you anyway', title: 'Related news' }
+      case 'room':
+        return { eyebrow: 'Today · The Peacock', title: 'The room' }
+    }
+  }
+
+  const body = () => {
+    if (!view) return null
+    switch (view.kind) {
+      case 'dept':
+        return view.id === 'bookings' ? (
+          <RunSheet bookings={bookings} covers={covers} loading={loading} error={error} />
+        ) : (
+          <p className="pg__lede">{DEPT_COPY[view.id].blurb}</p>
+        )
+      case 'revenue':
+        return <RevenuePanel />
+      case 'weather':
+        return <WeatherPanel />
+      case 'traffic':
+        return <TrafficPanel />
+      case 'news':
+        return <NewsPanel />
+      case 'room':
+        return <VenueFloor bookings={bookings} />
+    }
+  }
+
+  const { eyebrow, title } = head()
 
   return (
     <div className="shell">
       <header className="shell__bar">
-        {/* The lockup from the standalone demo: the firm's name, a rule, and
-            what the product is. It is the first thing anyone sees, so it says
-            what this is rather than just who made it. */}
+        {/* The firm's name, a rule, and what the product is. It is the first
+            thing anyone sees, so it says what this is rather than just who
+            made it. */}
         <span className="shell__lockup">
           <span className="shell__firm">
             Peregrine
@@ -79,24 +128,6 @@ export default function OwnerShell() {
             <i>Operating system</i>
           </span>
         </span>
-        <nav className="shell__nav">
-          <button
-            className={`shell__tab${tab === 'office' && !dept ? ' is-on' : ''}`}
-            onClick={() => {
-              setTab('office')
-              closeDept()
-            }}
-          >
-            Office
-          </button>
-          <button
-            className={`shell__tab${dept === 'bookings' ? ' is-on' : ''}`}
-            onClick={openBookings}
-          >
-            Bookings
-            {unseen > 0 && <span className="shell__badge">{unseen}</span>}
-          </button>
-        </nav>
         <div className="shell__venue">
           <b>The Peacock</b>
           <span>Jenny's Café · South Yarra</span>
@@ -105,8 +136,8 @@ export default function OwnerShell() {
 
       <main className="shell__body">
         <div className="dash">
-          <GlanceCard />
-          <RevenueCard onOpen={() => setDept('finance')} />
+          <GlanceCard onOpen={(tab) => setView({ kind: tab })} />
+          <RevenueCard onOpen={() => setView({ kind: 'revenue' })} />
           <ReviewCard />
         </div>
         <div className="floor">
@@ -115,6 +146,7 @@ export default function OwnerShell() {
               daysLearned={DAYS_LEARNED}
               onOpenBrain={() => setBrainOpen(true)}
               onOpenDepartment={openDept}
+              onEnterVenue={() => setView({ kind: 'room' })}
               resetFocus={resetFocus}
             />
           </div>
@@ -122,18 +154,21 @@ export default function OwnerShell() {
         </div>
       </main>
 
-      {dept && (
-        <Popup
-          eyebrow={dept === 'bookings' ? 'Today · The Peacock' : 'Department'}
-          title={DEPARTMENTS[dept].title}
-          onClose={closeDept}
-        >
-          {dept === 'bookings' ? (
-            <RunSheet bookings={bookings} covers={covers} loading={loading} error={error} />
-          ) : (
-            <p className="sheet__note">{DEPARTMENTS[dept].blurb}</p>
-          )}
+      {view && (
+        <Popup eyebrow={eyebrow} title={title} onClose={close}>
+          {body()}
         </Popup>
+      )}
+
+      {/* Bottom-right, and only when something has actually arrived. The
+          runsheet has no tab of its own: it belongs to the Bookings platform
+          in the office, and to this. */}
+      {unseen > 0 && !onRunSheet && (
+        <button className="ping" onClick={openRunSheet}>
+          <span className="ping__n">{unseen}</span>
+          {unseen === 1 ? 'New booking' : 'New bookings'}
+          <span className="ping__go">open the runsheet</span>
+        </button>
       )}
 
       {brainOpen && <BrainChat onClose={() => setBrainOpen(false)} />}

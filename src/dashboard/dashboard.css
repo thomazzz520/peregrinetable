@@ -186,3 +186,137 @@
   .floor { flex-direction: column; }
   .tasks { width: auto; padding-left: 0; }
 }
+
+/* ------------------------------------------------------------------
+   Detail panels — what a card opens into.
+   ------------------------------------------------------------------ */
+
+.pg { font-size: var(--pp-size-body); }
+.pg__lede { font-size: var(--pp-size-lead); line-height: 1.5; color: var(--pp-ink-soft); margin: 0 0 var(--pp-space-lg); }
+.pg__note { font-size: var(--pp-size-caption); color: var(--pp-ink-muted); margin-top: var(--pp-space-lg); }
+.pg__head {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro); font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--pp-ink-muted);
+  margin: var(--pp-space-xl) 0 var(--pp-space-sm);
+}
+
+.pg__stats { display: flex; gap: var(--pp-space-xxl); margin-bottom: var(--pp-space-lg); }
+.pg__statN { font-family: var(--pp-display); font-size: 24px; line-height: 1.1; }
+.pg__statL {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--pp-ink-muted); margin-top: 4px;
+}
+
+.pg__tabs { display: flex; gap: 4px; margin-bottom: var(--pp-space-lg); }
+.pg__tab {
+  border: 1px solid var(--pp-line); border-radius: var(--pp-radius-soft-pill);
+  background: transparent; padding: 5px 13px;
+  font: inherit; font-size: var(--pp-size-caption); color: var(--pp-ink-soft); cursor: pointer;
+}
+.pg__tab.is-on { background: var(--pp-ink); border-color: var(--pp-ink); color: var(--pp-paper); }
+
+/* chart beside the hour log — the shape and the exact figure together */
+.pg__split { display: flex; gap: var(--pp-space-xl); align-items: stretch; }
+.pg__chart { flex: 1; min-width: 0; }
+.pg__bars { display: flex; align-items: stretch; gap: 5px; height: 150px; }
+.pg__barCol { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; }
+.pg__barStack { display: flex; flex-direction: column-reverse; width: 100%; border-radius: 3px 3px 0 0; overflow: hidden; }
+.pg__barStack i { display: block; width: 100%; }
+.pg__barCol:hover .pg__barStack { filter: brightness(1.08); }
+.pg__hrs { display: flex; gap: 5px; margin-top: 6px; }
+.pg__hrs span { flex: 1; text-align: center; font-family: var(--pp-mono); font-size: var(--pp-size-micro); color: var(--pp-ink-muted); }
+
+.pg__log { flex: 1; min-width: 0; border-left: 1px solid var(--pp-line); padding-left: var(--pp-space-xl); }
+.pg__logRow { display: flex; align-items: center; gap: 9px; padding: 2px 0; }
+.pg__logHr { font-family: var(--pp-mono); font-size: var(--pp-size-micro); color: var(--pp-ink-muted); width: 24px; flex: none; }
+.pg__logTrack { flex: 1; height: 5px; background: var(--pp-bone); border-radius: 3px; overflow: hidden; }
+.pg__logFill { display: flex; height: 100%; }
+.pg__logFill i { display: block; height: 100%; }
+.pg__logAmt { font-size: var(--pp-size-caption); font-weight: 600; width: 44px; text-align: right; flex: none; }
+
+.pg__rows { list-style: none; margin: 0; padding: 0; }
+.pg__rows li { display: flex; align-items: center; gap: 9px; padding: 7px 0; border-bottom: 1px solid var(--pp-bone); }
+.pg__rows i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.pg__rowName { flex: 1; }
+.pg__rowAmt { font-weight: 600; }
+.pg__rowPct { width: 42px; text-align: right; color: var(--pp-ink-muted); }
+
+.pg__stack { display: flex; height: 16px; border-radius: var(--pp-radius-soft-pill); overflow: hidden; margin: var(--pp-space-sm) 0 var(--pp-space-md); }
+.pg__stack span { display: block; height: 100%; }
+
+.pg__even {
+  position: relative; height: 30px; border-radius: var(--pp-radius-edge);
+  background: var(--pp-sage); overflow: visible; margin-top: var(--pp-space-sm);
+}
+.pg__evenCost { position: absolute; inset: 0 auto 0 0; background: #D7DACC; border-radius: var(--pp-radius-edge) 0 0 var(--pp-radius-edge); }
+.pg__evenMark { position: absolute; top: -6px; bottom: -6px; width: 2px; background: var(--pp-ink); }
+.pg__evenMark span {
+  position: absolute; left: 8px; top: -2px; white-space: nowrap;
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro); color: var(--pp-ink);
+}
+.pg__evenKey { display: flex; gap: var(--pp-space-xl); margin-top: var(--pp-space-md); font-size: var(--pp-size-caption); color: var(--pp-ink-soft); }
+.pg__evenKey i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+
+/* ---- weather ---- */
+.pg__week { list-style: none; margin: 0; padding: 0; }
+.pg__week li { display: flex; align-items: baseline; gap: var(--pp-space-md); padding: 9px 0; border-bottom: 1px solid var(--pp-bone); }
+.pg__week li.is-now { font-weight: 600; }
+.pg__weekDay { width: 46px; font-family: var(--pp-mono); font-size: var(--pp-size-caption); text-transform: uppercase; letter-spacing: 0.08em; }
+.pg__weekTemp { font-family: var(--pp-display); font-size: var(--pp-size-title); width: 42px; }
+.pg__weekLow { color: var(--pp-ink-muted); width: 34px; }
+.pg__weekLabel { width: 92px; color: var(--pp-ink-soft); }
+.pg__weekNote { flex: 1; color: var(--pp-ink-muted); font-size: var(--pp-size-caption); }
+
+/* ---- foot traffic ---- */
+.pg__traffic { display: flex; align-items: flex-end; gap: var(--pp-space-md); height: 170px; }
+.pg__trafficCol { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; gap: 6px; }
+.pg__trafficN { font-family: var(--pp-mono); font-size: var(--pp-size-caption); color: var(--pp-ink-soft); }
+.pg__trafficBar { width: 100%; background: var(--pp-sage); border-radius: 3px 3px 0 0; }
+.pg__trafficDay { font-family: var(--pp-mono); font-size: var(--pp-size-micro); text-transform: uppercase; color: var(--pp-ink-muted); }
+
+/* ---- news ---- */
+.pg__news { list-style: none; margin: 0; padding: 0; }
+.pg__news li { padding: var(--pp-space-lg) 0; border-bottom: 1px solid var(--pp-bone); }
+.pg__newsTag { font-family: var(--pp-mono); font-size: var(--pp-size-micro); letter-spacing: 0.12em; text-transform: uppercase; color: var(--pp-ink-muted); }
+.pg__newsHead { font-family: var(--pp-display); font-weight: 500; font-size: var(--pp-size-title); margin: 5px 0 6px; }
+.pg__newsBody { margin: 0; color: var(--pp-ink-soft); line-height: 1.5; }
+.pg__newsHits {
+  display: flex; gap: 7px; margin: var(--pp-space-md) 0 0; padding: 8px 11px;
+  background: color-mix(in srgb, var(--pp-sage) 16%, transparent);
+  border-radius: var(--pp-radius-soft-chip);
+  font-size: var(--pp-size-caption);
+}
+.pg__spark { color: var(--pp-sage-deep); }
+
+/* ---- the room ---- */
+.venuefloor__scene { height: 460px; border-radius: var(--pp-radius-soft-card); overflow: hidden; background: var(--pp-bone); }
+.venuefloor__key { list-style: none; display: flex; gap: var(--pp-space-xl); margin: var(--pp-space-md) 0 0; padding: 0; font-size: var(--pp-size-caption); color: var(--pp-ink-soft); }
+.venuefloor__key i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 7px; }
+.venuefloor__key i.is-available { background: #EE7460; }
+.venuefloor__key i.is-partly { background: #DCA898; }
+.venuefloor__key i.is-full { background: #CDBCAA; }
+
+/* ---- new-booking notification, bottom right ---- */
+.ping {
+  position: fixed; right: 26px; bottom: 26px; z-index: 55;
+  display: flex; align-items: center; gap: var(--pp-space-md);
+  background: var(--pp-ink); color: var(--pp-paper);
+  border: 0; border-radius: var(--pp-radius-soft-card);
+  padding: 13px 18px;
+  font: inherit; font-size: var(--pp-size-body);
+  cursor: pointer;
+  animation: pingIn 260ms ease-out;
+}
+.ping:hover { background: var(--pp-sage-deep); }
+.ping__n {
+  min-width: 22px; height: 22px; border-radius: var(--pp-radius-soft-pill);
+  background: var(--pp-attention); color: var(--pp-ink);
+  font-family: var(--pp-mono); font-size: var(--pp-size-caption); font-weight: 700;
+  display: grid; place-items: center; flex: none;
+}
+.ping__go { font-family: var(--pp-mono); font-size: var(--pp-size-micro); letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.72; }
+@keyframes pingIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* Cards that open into a detail panel say so on hover. */
+.card--open { cursor: pointer; transition: border-color 140ms ease; }
+.card--open:hover { border-color: var(--pp-sage-deep); }

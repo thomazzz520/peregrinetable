@@ -105,3 +105,77 @@ export const TASKS: Task[] = [
     cta: 'Approve the order',
   },
 ]
+
+/* ------------------------------------------------------------------ *
+ * Detail-page data — the half of the story the till alone never shows
+ * ------------------------------------------------------------------ */
+
+export type Cost = { name: string; amt: number; color: string }
+
+export const COSTS: Cost[] = [
+  { name: 'Wages', amt: 780, color: '#5B8CFF' },
+  { name: 'Supplier', amt: 340, color: '#80D0B8' },
+  { name: 'Rent', amt: 210, color: '#F0B84B' },
+  { name: 'Electricity', amt: 95, color: '#FF8A65' },
+  { name: 'Compliance', amt: 40, color: '#B39DDB' },
+]
+export const COST_TOTAL = COSTS.reduce((a, c) => a + c.amt, 0)
+
+export const CHANNELS: Slice[] = [
+  { name: 'Square (till)', pct: 78, color: '#5B8CFF' },
+  { name: 'Uber Eats', pct: 12, color: '#80D0B8' },
+  { name: 'DoorDash', pct: 6, color: '#FF6F5E' },
+  { name: 'Menulog', pct: 4, color: '#F0B84B' },
+]
+
+export const PAYMENTS: Slice[] = [
+  { name: 'Card / tap', pct: 85, color: '#5B8CFF' },
+  { name: 'Cash', pct: 15, color: '#F0B84B' },
+]
+
+export const AVG_TICKET = 22.75
+export const COVERS = 96
+
+/** Seven days of weather, for the outlook page. */
+export const OUTLOOK = [
+  { day: 'Today', temp: 18, low: 11, label: 'Cloudy', note: 'Overcast through the day, no rain expected.' },
+  { day: 'Thu', temp: 21, low: 12, label: 'Sunny', note: 'Clearing by lunch — courtyard weather.' },
+  { day: 'Fri', temp: 23, low: 14, label: 'Sunny', note: 'Warmest day of the week.' },
+  { day: 'Sat', temp: 19, low: 13, label: 'Showers', note: 'Wet through the morning market.' },
+  { day: 'Sun', temp: 16, low: 10, label: 'Rain', note: 'Steady rain. Bring the courtyard tables in.' },
+  { day: 'Mon', temp: 17, low: 9, label: 'Cloudy', note: 'Grey but dry.' },
+  { day: 'Tue', temp: 20, low: 11, label: 'Part cloud', note: 'Pleasant by the afternoon.' },
+]
+
+/** Foot traffic near the venue, by day, indexed against a usual week. */
+export const TRAFFIC = [
+  { day: 'Mon', idx: 82 },
+  { day: 'Tue', idx: 118 },
+  { day: 'Wed', idx: 96 },
+  { day: 'Thu', idx: 104 },
+  { day: 'Fri', idx: 131 },
+  { day: 'Sat', idx: 147 },
+  { day: 'Sun', idx: 88 },
+]
+
+/** Things happening outside the venue that land on the owner anyway. */
+export const NEWS = [
+  {
+    tag: 'RBA · cash rate',
+    head: 'Cash rate held at 4.35%',
+    body: 'No change to loan or overdraft repayments this month. The next decision is in five weeks.',
+    hits: 'Your fitout loan repayment stays at $1,240 a month.',
+  },
+  {
+    tag: 'Fair Work · award',
+    head: 'Hospitality award rates rise 3.5% from 1 July',
+    body: 'The annual wage review lifts all classifications under the Restaurant Industry Award.',
+    hits: 'On last week\'s roster that is about $38 more a week in wages.',
+  },
+  {
+    tag: 'Council · South Yarra',
+    head: 'Chapel Street footpath works, three weeks from Monday',
+    body: 'Resurfacing between Toorak Road and Malcolm Street. Foot traffic is expected to drop while it runs.',
+    hits: 'Worth planning a quieter roster for those weeks.',
+  },
+]

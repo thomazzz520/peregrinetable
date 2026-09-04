@@ -16,17 +16,20 @@ import {
  * Glance card — whatever is worth a look before the day starts.
  * ------------------------------------------------------------------ */
 
-export function GlanceCard() {
+export function GlanceCard({ onOpen }: { onOpen?: (tab: GlanceKey) => void }) {
   const [tab, setTab] = useState<GlanceKey>('weather')
   const g = GLANCE[tab]
   return (
-    <section className="card card--glance" data-tab={tab}>
+    <section className="card card--glance card--open" data-tab={tab} onClick={() => onOpen?.(tab)}>
       <nav className="glance__tabs">
         {(Object.keys(GLANCE) as GlanceKey[]).map((k) => (
           <button
             key={k}
             className={`glance__tab${k === tab ? ' is-on' : ''}`}
-            onClick={() => setTab(k)}
+            onClick={(e) => {
+              e.stopPropagation()
+              setTab(k)
+            }}
           >
             {GLANCE[k].label}
           </button>
@@ -121,12 +124,10 @@ export function RevenueCard({ onOpen }: { onOpen?: () => void }) {
   const insight = useMemo(() => INSIGHTS[Math.floor(Math.random() * INSIGHTS.length)]!, [])
 
   return (
-    <section className="card card--revenue">
+    <section className="card card--revenue card--open" onClick={onOpen}>
       <header className="card__top">
         <span className="card__label">Revenue</span>
-        <button className="card__range" onClick={onOpen}>
-          Today ▾
-        </button>
+        <span className="card__range">Today ▾</span>
         <span className="card__badge">+6.2%</span>
       </header>
 
