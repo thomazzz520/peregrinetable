@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { PlatformId } from '../office/AgentOffice'
 import { RealFloorScene } from '../office/RealFloor3D'
 import BrainChat from '../brain/BrainChat'
@@ -16,6 +16,7 @@ import {
   WeatherPanel,
 } from '../dashboard/Panels'
 import VenueFloor from '../dashboard/VenueFloor'
+import { pickWeather } from '../dashboard/GlanceScene'
 import TaskPanel from '../dashboard/TaskPanel'
 import '../dashboard/dashboard.css'
 import './shell.css'
@@ -58,6 +59,9 @@ export default function OwnerShell() {
      without it the same department could only ever be opened once. */
   const [resetFocus, setResetFocus] = useState(0)
   const { bookings, covers, unseen, loading, error, markSeen } = useBookings()
+  /* Picked once and shared, so the card and the page can never disagree
+     about what the weather is doing. */
+  const weather = useMemo(() => pickWeather(), [])
 
   const close = useCallback(() => {
     setView(null)
@@ -111,7 +115,7 @@ export default function OwnerShell() {
       case 'revenue':
         return <RevenuePanel />
       case 'weather':
-        return <WeatherPanel />
+        return <WeatherPanel weather={weather} />
       case 'traffic':
         return <TrafficPanel />
       case 'news':
@@ -168,7 +172,7 @@ export default function OwnerShell() {
 
       <main className="shell__body">
         <div className="dash">
-          <GlanceCard onOpen={(tab) => setView({ kind: tab })} />
+          <GlanceCard weather={weather} onOpen={(tab) => setView({ kind: tab })} />
           <RevenueCard onOpen={() => setView({ kind: 'revenue' })} />
           <ReviewCard />
         </div>

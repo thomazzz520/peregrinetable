@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { tableOccupancy, tables, todayKey, type Booking, type Table, type TableState } from '../data'
 import FloorPlan from '../scene/FloorPlan'
+import ServiceGrid from './ServiceGrid'
 
 /**
  * The room itself — what clicking the building in the middle of the office
@@ -29,6 +30,10 @@ export default function VenueFloor({ bookings }: { bookings: Booking[] }) {
         <li><i className="is-partly" />Spoken for in part</li>
         <li><i className="is-full" />Busy across the service</li>
       </ul>
+      {/* The room says how busy a table is today. This says who is on it,
+          and when — which is the question actually asked at the pass. */}
+      <h3 className="pg__head">Who is on what, and when</h3>
+      <ServiceGrid bookings={bookings} />
     </div>
   )
 }

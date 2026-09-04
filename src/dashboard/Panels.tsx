@@ -18,6 +18,7 @@ import {
   LOG,
   type Slice,
 } from './data'
+import { WeatherScene, type Weather } from './GlanceScene'
 
 const money = (n: number) => '$' + n.toLocaleString()
 
@@ -162,17 +163,27 @@ export function RevenuePanel() {
  * Weather, foot traffic, news
  * ------------------------------------------------------------------ */
 
-export function WeatherPanel() {
+export function WeatherPanel({ weather }: { weather: Weather }) {
   return (
     <div className="pg">
+      {/* The same live sky the card carries, given room to breathe. The page
+          was the one place the weather stopped being weather and went back
+          to being a table. */}
+      <div className="pg__sky" data-mode={weather.mode} style={{ background: weather.bg }}>
+        <WeatherScene weather={weather} />
+        <div className="pg__skyNow">
+          <span className="pg__skyTemp">{weather.temp}°</span>
+          <span className="pg__skyLabel">{weather.copy.label}</span>
+        </div>
+      </div>
       <Stats
         items={[
-          { n: `${OUTLOOK[0]!.temp}°`, l: 'Now' },
+          { n: `${weather.temp}°`, l: 'Now' },
           { n: `${OUTLOOK[0]!.low}°`, l: 'Overnight low' },
-          { n: OUTLOOK[0]!.label, l: 'Conditions' },
+          { n: weather.copy.label, l: 'Conditions' },
         ]}
       />
-      <p className="pg__lede">{OUTLOOK[0]!.note}</p>
+      <p className="pg__lede">{weather.copy.desc}</p>
       <h3 className="pg__head">The week ahead</h3>
       <ul className="pg__week">
         {OUTLOOK.map((d, i) => (

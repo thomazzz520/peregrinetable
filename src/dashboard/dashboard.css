@@ -462,3 +462,59 @@
 .newsPulse { position: absolute; right: 12px; top: 26%; width: 6px; height: 6px; border-radius: 50%; background: #80D0B8; }
 .newsPulse::after { content: ''; position: absolute; inset: -5px; border-radius: 50%; border: 1.5px solid #80D0B8; animation: newsPing 2.2s ease-out infinite; }
 @keyframes newsPing { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(1.9); opacity: 0; } }
+
+/* ------------------------------------------------------------------
+   Service grid — every table down the side, the service across the top.
+   ------------------------------------------------------------------ */
+
+.grid { margin-top: var(--pp-space-lg); font-size: var(--pp-size-caption); }
+.grid__head { display: grid; align-items: end; gap: 2px; padding-bottom: 6px; border-bottom: 1px solid var(--pp-line); }
+.grid__hour {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  color: var(--pp-ink-muted); white-space: nowrap;
+}
+.grid__zone { margin-top: var(--pp-space-md); }
+.grid__zoneName {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--pp-ink-muted);
+  margin-bottom: 5px;
+}
+.grid__row { display: grid; gap: 2px; align-items: stretch; min-height: 26px; margin-bottom: 2px; }
+.grid__table {
+  display: flex; align-items: baseline; gap: 6px;
+  font-family: var(--pp-mono); font-weight: 600; color: var(--pp-ink);
+  grid-column: 1; grid-row: 1;
+}
+.grid__table i { font-style: normal; font-weight: 400; font-size: var(--pp-size-micro); color: var(--pp-ink-muted); }
+.grid__cell { grid-row: 1; background: var(--pp-bone); border-radius: 2px; }
+.grid__booking {
+  grid-row: 1;
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  padding: 3px 8px;
+  background: #EE7460; color: #FFF6F2;
+  border-radius: var(--pp-radius-edge);
+  overflow: hidden; white-space: nowrap;
+}
+.grid__booking.is-seated { background: var(--pp-sage-deep); color: var(--pp-paper); }
+.grid__booking b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.grid__booking i { font-style: normal; font-family: var(--pp-mono); opacity: 0.8; flex: none; }
+.grid__note { margin-top: var(--pp-space-lg); font-size: var(--pp-size-caption); color: var(--pp-ink-muted); }
+
+/* The weather page's sky band — the card's scene, given room. */
+.pg__sky {
+  position: relative; height: 190px;
+  border-radius: var(--pp-radius-soft-card);
+  overflow: hidden;
+  margin-bottom: var(--pp-space-lg);
+}
+.pg__skyNow { position: absolute; left: 22px; bottom: 18px; z-index: 1; display: flex; align-items: baseline; gap: 12px; }
+.pg__skyTemp { font-family: var(--pp-display); font-size: 46px; line-height: 1; }
+.pg__skyLabel {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  letter-spacing: 0.14em; text-transform: uppercase;
+  padding: 4px 9px; border-radius: var(--pp-radius-soft-pill);
+}
+.pg__sky[data-mode='light'] .pg__skyTemp { color: #0F2A40; }
+.pg__sky[data-mode='light'] .pg__skyLabel { background: rgba(255,255,255,0.55); color: #0F2A40; }
+.pg__sky[data-mode='dark'] .pg__skyTemp { color: #FBFBF9; }
+.pg__sky[data-mode='dark'] .pg__skyLabel { background: rgba(255,255,255,0.16); color: #FBFBF9; }

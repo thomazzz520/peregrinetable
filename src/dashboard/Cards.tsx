@@ -11,18 +11,20 @@ import {
   type GlanceKey,
   type Slice,
 } from './data'
-import { GlanceScene, pickWeather } from './GlanceScene'
+import { GlanceScene, type Weather } from './GlanceScene'
 
 /* ------------------------------------------------------------------ *
  * Glance card — whatever is worth a look before the day starts.
  * ------------------------------------------------------------------ */
 
-export function GlanceCard({ onOpen }: { onOpen?: (tab: GlanceKey) => void }) {
+export function GlanceCard({
+  weather,
+  onOpen,
+}: {
+  weather: Weather
+  onOpen?: (tab: GlanceKey) => void
+}) {
   const [tab, setTab] = useState<GlanceKey>('weather')
-  /* Picked once per load, from what this hour could plausibly do — so the
-     card is a different day each time you open the demo rather than the
-     same fixed 18° forever. */
-  const weather = useMemo(() => pickWeather(), [])
   const g = GLANCE[tab]
   const big = tab === 'weather' ? `${weather.temp}°C` : g.big
   const tag = tab === 'weather' ? weather.copy.label : g.tag
