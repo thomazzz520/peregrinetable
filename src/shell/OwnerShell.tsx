@@ -2,10 +2,18 @@ import { useCallback, useEffect, useState } from 'react'
 import AgentOffice, { type PlatformId } from '../office/AgentOffice'
 import BrainChat from '../brain/BrainChat'
 import Popup from './Popup'
+import Splash from './Splash'
 import RunSheet from './RunSheet'
 import { useBookings } from './useBookings'
 import { GlanceCard, RevenueCard, ReviewCard } from '../dashboard/Cards'
-import { NewsPanel, RevenuePanel, TrafficPanel, WeatherPanel } from '../dashboard/Panels'
+import {
+  ContactPanel,
+  HistoryPanel,
+  NewsPanel,
+  RevenuePanel,
+  TrafficPanel,
+  WeatherPanel,
+} from '../dashboard/Panels'
 import VenueFloor from '../dashboard/VenueFloor'
 import TaskPanel from '../dashboard/TaskPanel'
 import '../dashboard/dashboard.css'
@@ -32,6 +40,8 @@ type View =
   | { kind: 'traffic' }
   | { kind: 'news' }
   | { kind: 'room' }
+  | { kind: 'history' }
+  | { kind: 'contact' }
 
 const DEPT_COPY: Record<PlatformId, { title: string; blurb: string }> = {
   bookings: { title: 'Bookings', blurb: '' },
@@ -83,6 +93,10 @@ export default function OwnerShell() {
         return { eyebrow: 'What lands on you anyway', title: 'Related news' }
       case 'room':
         return { eyebrow: 'Today · The Peacock', title: 'The room' }
+      case 'history':
+        return { eyebrow: 'Today and yesterday', title: 'History log' }
+      case 'contact':
+        return { eyebrow: 'What the brain is plugged into', title: 'Contact' }
     }
   }
 
@@ -105,6 +119,10 @@ export default function OwnerShell() {
         return <NewsPanel />
       case 'room':
         return <VenueFloor bookings={bookings} />
+      case 'history':
+        return <HistoryPanel />
+      case 'contact':
+        return <ContactPanel />
     }
   }
 
@@ -128,6 +146,25 @@ export default function OwnerShell() {
             <i>Operating system</i>
           </span>
         </span>
+        {/* The tabs from the old bar. Bookings is deliberately not among
+            them — the runsheet belongs to its platform in the office. */}
+        <nav className="shell__nav">
+          {(
+            [
+              ['Revenue', 'revenue'],
+              ['History log', 'history'],
+              ['Contact', 'contact'],
+            ] as const
+          ).map(([label, kind]) => (
+            <button
+              key={kind}
+              className={`shell__tab${view?.kind === kind ? ' is-on' : ''}`}
+              onClick={() => setView({ kind })}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
         <div className="shell__venue">
           <b>The Peacock</b>
           <span>Jenny's Café · South Yarra</span>
@@ -172,6 +209,8 @@ export default function OwnerShell() {
       )}
 
       {brainOpen && <BrainChat onClose={() => setBrainOpen(false)} />}
+
+      <Splash />
     </div>
   )
 }

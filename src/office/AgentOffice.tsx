@@ -15,6 +15,7 @@ import {
 } from "@react-three/drei";
 import { motion, AnimatePresence } from "framer-motion";
 import Constellation from "../brain/Constellation";
+import { domain } from "../theme/tokens";
 import FirstPaint from "../three/FirstPaint";
 
 /* ------------------------------------------------------------------ *
@@ -91,9 +92,22 @@ const C = {
   torso: ["#2B2E28", "#33362F", "#26281F"], // near-monochrome charcoal
 };
 
-/** Per-platform ground tint — most platforms are plain white; a couple get
- *  a faint colour wash, matching the real site's reference look. */
-const PLATFORM_TINT: Partial<Record<PlatformId, string>> = {};
+/** Per-platform ground tint. The same six domain colours the brain gives
+ *  each department's nodes and the chat gives its rail, so a department is
+ *  one colour wherever you meet it — on the floor, in the constellation,
+ *  and in the conversation. Washed right back: these are large surfaces and
+ *  the tints are chosen for a card, not a whole platform. */
+const wash = (hex: string, towards = 0.5) =>
+  "#" + new THREE.Color(hex).lerp(new THREE.Color("#F7F7F5"), towards).getHexString();
+
+const PLATFORM_TINT: Partial<Record<PlatformId, string>> = {
+  finance: wash(domain.finance),
+  marketing: wash(domain.marketing),
+  suppliers: wash(domain.suppliers),
+  roster: wash(domain.roster),
+  admin: wash(domain.admin),
+  bookings: wash(domain.bookings),
+};
 
 /* ------------------------------------------------------------------ *
  * Layout — six platforms in a hexagon ring, ramps into a central hub.

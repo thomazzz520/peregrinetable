@@ -9,10 +9,13 @@
 
 export type Slice = { name: string; pct: number; color: string }
 
+/* The standalone demo's exact chart colours. Brighter than the muted
+   department tints on purpose: those wash a whole platform, these have to
+   carry a bar chart on white. */
 export const MIX: Slice[] = [
   { name: 'Coffee', pct: 58, color: '#5B8CFF' },
-  { name: 'Food', pct: 31, color: '#80D0B8' },
-  { name: 'Retail', pct: 11, color: '#F0B84B' },
+  { name: 'Food', pct: 31, color: '#3DDBAE' },
+  { name: 'Retail', pct: 11, color: '#F5B942' },
 ]
 
 /** Takings by hour, 6am to 5pm, as a share of the busiest hour. */
@@ -114,8 +117,8 @@ export type Cost = { name: string; amt: number; color: string }
 
 export const COSTS: Cost[] = [
   { name: 'Wages', amt: 780, color: '#5B8CFF' },
-  { name: 'Supplier', amt: 340, color: '#80D0B8' },
-  { name: 'Rent', amt: 210, color: '#F0B84B' },
+  { name: 'Supplier', amt: 340, color: '#3DDBAE' },
+  { name: 'Rent', amt: 210, color: '#F5B942' },
   { name: 'Electricity', amt: 95, color: '#FF8A65' },
   { name: 'Compliance', amt: 40, color: '#B39DDB' },
 ]
@@ -123,14 +126,14 @@ export const COST_TOTAL = COSTS.reduce((a, c) => a + c.amt, 0)
 
 export const CHANNELS: Slice[] = [
   { name: 'Square (till)', pct: 78, color: '#5B8CFF' },
-  { name: 'Uber Eats', pct: 12, color: '#80D0B8' },
+  { name: 'Uber Eats', pct: 12, color: '#3DDBAE' },
   { name: 'DoorDash', pct: 6, color: '#FF6F5E' },
-  { name: 'Menulog', pct: 4, color: '#F0B84B' },
+  { name: 'Menulog', pct: 4, color: '#F5B942' },
 ]
 
 export const PAYMENTS: Slice[] = [
   { name: 'Card / tap', pct: 85, color: '#5B8CFF' },
-  { name: 'Cash', pct: 15, color: '#F0B84B' },
+  { name: 'Cash', pct: 15, color: '#F5B942' },
 ]
 
 export const AVG_TICKET = 22.75
@@ -178,4 +181,28 @@ export const NEWS = [
     body: 'Resurfacing between Toorak Road and Malcolm Street. Foot traffic is expected to drop while it runs.',
     hits: 'Worth planning a quieter roster for those weeks.',
   },
+]
+
+/** What the team did today and yesterday, and what it is still holding. */
+export type LogEntry = { time: string; dept: string; note: string; done: boolean }
+
+export const LOG: LogEntry[] = [
+  { time: 'Sun', dept: 'Rostering', note: "Next week's roster built and sent to the team.", done: true },
+  { time: '05:31', dept: 'Suppliers', note: 'Price check caught oat milk up 9% this month. Verified alternative found, $0.40/L cheaper.', done: true },
+  { time: '05:52', dept: 'Suppliers', note: 'Tomorrow’s tomato order redrafted around a 34% price move, $118 in total.', done: false },
+  { time: '07:58', dept: 'Finance', note: 'Duplicate $39/mo card-fee subscription flagged, overlapping the Square plan.', done: true },
+  { time: '06:04', dept: 'Finance', note: 'Cancelled, refund confirmed.', done: true },
+  { time: '08:10', dept: 'Marketing', note: 'Tuesday post drafted: "bring-your-own-cup, $4 flat white, 11–2."', done: true },
+  { time: '21:30', dept: 'Marketing', note: 'Approved by Jenny.', done: true },
+  { time: '22:00', dept: 'Marketing', note: 'Scheduled to post.', done: true },
+  { time: '22:14', dept: 'Bookings', note: 'Function enquiry arrived through the website form, 18 guests.', done: true },
+  { time: '05:58', dept: 'Bookings', note: '18-guest function quote drafted from the function menu at $61 a head.', done: false },
+]
+
+export const CONTACTS = [
+  { name: 'Square', kind: 'Till & payments', detail: 'Connected · syncing every 5 minutes' },
+  { name: 'Xero', kind: 'Bookkeeping', detail: 'Connected · reconciled to yesterday' },
+  { name: 'Google Business', kind: 'Reviews', detail: 'Connected · 41 reviews, 4.5★' },
+  { name: 'Uber Eats', kind: 'Delivery', detail: 'Connected · 12% of takings' },
+  { name: 'The Peacock', kind: 'Venue', detail: "Jenny's Café · 41 Chapel St, South Yarra" },
 ]

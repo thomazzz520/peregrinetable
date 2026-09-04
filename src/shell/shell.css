@@ -126,3 +126,33 @@
 }
 .pop__close:hover { border-color: var(--pp-ink-soft); color: var(--pp-ink); }
 .pop__body { flex: 1; min-height: 0; overflow-y: auto; padding: var(--pp-space-lg) var(--pp-space-xl) var(--pp-space-xl); }
+
+/* ------------------------------------------------------------------
+   The cover — shown once on first load while the scenes compile.
+   ------------------------------------------------------------------ */
+.splash {
+  position: fixed; inset: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--pp-paper);
+  transition: opacity 620ms ease;
+}
+.splash.is-hiding { opacity: 0; pointer-events: none; }
+.splash__lockup { display: flex; align-items: center; gap: 34px; }
+.splash__firm {
+  font-family: var(--pp-display);
+  font-size: 58px;
+  line-height: 0.96;
+  text-align: right;
+  letter-spacing: 0.005em;
+}
+.splash__rule { width: 1px; align-self: stretch; background: var(--pp-line); }
+.splash__product { font-size: 28px; line-height: 1.15; }
+.splash__product em { font-style: normal; color: var(--pp-sage-deep); }
+.splash__product i {
+  display: block; font-style: normal; margin-top: 8px;
+  font-family: var(--pp-mono); font-size: 13px;
+  letter-spacing: 0.22em; text-transform: uppercase; color: var(--pp-ink-muted);
+}
+
+/* ---- the tabs from the old bar ---- */
+.shell__nav { display: flex; gap: 2px; margin-left: var(--pp-space-xxl); }

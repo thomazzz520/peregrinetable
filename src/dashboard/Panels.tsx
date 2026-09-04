@@ -14,6 +14,8 @@ import {
   OUTLOOK,
   PAYMENTS,
   TRAFFIC,
+  CONTACTS,
+  LOG,
   type Slice,
 } from './data'
 
@@ -241,6 +243,57 @@ export function NewsPanel() {
               <span className="pg__spark">✦</span>
               {n.hits}
             </p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ *
+ * History and contacts
+ * ------------------------------------------------------------------ */
+
+export function HistoryPanel() {
+  return (
+    <div className="pg">
+      <p className="pg__lede">
+        Everything the team did, and everything it is still holding. Nothing on
+        this list went out in your name without your say-so.
+      </p>
+      <ul className="pg__log2">
+        {LOG.map((l, i) => (
+          <li key={i}>
+            <span className="pg__log2Time">{l.time}</span>
+            <span className="pg__log2Body">
+              <span className="pg__log2Dept">{l.dept}</span>
+              <span className="pg__log2Note">{l.note}</span>
+              <span className={`pg__log2State${l.done ? '' : ' is-waiting'}`}>
+                {l.done ? '✓ Done' : '● Waiting on you'}
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+export function ContactPanel() {
+  return (
+    <div className="pg">
+      <p className="pg__lede">
+        What the brain is plugged into. It reads from these; it writes nothing
+        back without you approving it first.
+      </p>
+      <ul className="pg__rows">
+        {CONTACTS.map((c) => (
+          <li key={c.name}>
+            <i style={{ background: '#4FAE90' }} />
+            <span className="pg__rowName">
+              <b>{c.name}</b> · {c.kind}
+            </span>
+            <span className="pg__rowPctWide">{c.detail}</span>
           </li>
         ))}
       </ul>

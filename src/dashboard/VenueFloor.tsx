@@ -22,7 +22,7 @@ export default function VenueFloor({ bookings }: { bookings: Booking[] }) {
   return (
     <div className="venuefloor">
       <div className="venuefloor__scene">
-        <FloorPlan tables={tables} stateOf={stateOf} />
+        <FloorPlan freeSpin tables={tables} stateOf={stateOf} />
       </div>
       <ul className="venuefloor__key">
         <li><i className="is-available" />Free most of the day</li>

@@ -320,3 +320,35 @@
 /* Cards that open into a detail panel say so on hover. */
 .card--open { cursor: pointer; transition: border-color 140ms ease; }
 .card--open:hover { border-color: var(--pp-sage-deep); }
+
+/* ---- history log ---- */
+.pg__log2 { list-style: none; margin: 0; padding: 0; }
+.pg__log2 li { display: flex; gap: var(--pp-space-md); padding: var(--pp-space-md) 0; border-bottom: 1px solid var(--pp-bone); }
+.pg__log2Time { font-family: var(--pp-mono); font-size: var(--pp-size-caption); color: var(--pp-ink-muted); width: 52px; flex: none; padding-top: 2px; }
+.pg__log2Body { flex: 1; }
+.pg__log2Dept {
+  display: block; font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--pp-ink-muted);
+}
+.pg__log2Note { display: block; margin: 3px 0 5px; line-height: 1.45; }
+.pg__log2State { font-size: var(--pp-size-caption); color: var(--pp-ok); }
+.pg__log2State.is-waiting { color: var(--pp-attention); font-weight: 600; }
+.pg__rowPctWide { color: var(--pp-ink-muted); font-size: var(--pp-size-caption); }
+
+/* The detail panels sit on card-white inside the paper popup, the way the
+   standalone demo's pages did — the sections read as separate surfaces
+   rather than one long sheet. */
+.pop__body .pg__split,
+.pop__body .pg__week,
+.pop__body .pg__traffic,
+.pop__body .pg__news,
+.pop__body .pg__log2 {
+  background: rgba(248, 242, 231, 0.55);
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-radius-soft-card);
+  padding: 18px 20px;
+}
+.pop__body .pg__week li:last-child,
+.pop__body .pg__news li:last-child,
+.pop__body .pg__log2 li:last-child { border-bottom: 0; }
+.pop__body .pg__rows li:last-child { border-bottom: 0; }

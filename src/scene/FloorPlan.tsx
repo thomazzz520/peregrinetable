@@ -134,16 +134,26 @@ function IsoCamera({ zoomMul }: { zoomMul: number }) {
   return <OrthographicCamera ref={cam} makeDefault position={[20, 20, 20]} near={-100} far={200} />
 }
 
-/** 90°-snapped rotation with easing. Never a free orbit, never any tilt (§1). */
+/**
+ * 90°-snapped rotation with easing, and never any tilt (§1).
+ *
+ * `spin` adds a free drag offset on top of the snap, used only by the
+ * owner's read-only view of the room. The guest scene leaves it alone and
+ * keeps the quarter turns. Note this rotates the *room*, not the camera —
+ * the isometric projection the art direction mandates is untouched either
+ * way, which is the part that actually matters.
+ */
 function Turntable({
   quarter,
   onShadeQuarter,
   reduced,
+  spin,
   children,
 }: {
   quarter: number
   onShadeQuarter: (q: number) => void
   reduced: boolean
+  spin?: React.RefObject<number>
   children: ReactNode
 }) {
   const group = useRef<Group>(null)
@@ -171,6 +181,7 @@ function Turntable({
       g.rotation.y = a.from + (a.to - a.from) * standardEase(t)
       if (t >= 1) a.start = -1
     }
+    if (spin) g.rotation.y = (a.start >= 0 ? g.rotation.y : a.to) + spin.current
     // The dark side is fixed on screen, so the face grouping flips as the room
     // passes each 45° mark — the least visible moment in the turn.
     const q = ((Math.round(g.rotation.y / (Math.PI / 2)) % 4) + 4) % 4
@@ -239,6 +250,9 @@ function useCanvasMeasureFix(ref: RefObject<HTMLDivElement | null>) {
 }
 
 export type FloorPlanProps = {
+  /** Drag to spin the room. Off by default: the guest scene keeps the
+   *  90° snaps the art direction asks for. */
+  freeSpin?: boolean
   tables: Table[]
   stateOf: (table: Table) => TableState
   selectedId?: string | null
@@ -248,6 +262,7 @@ export type FloorPlanProps = {
 }
 
 export default function FloorPlan({
+  freeSpin = false,
   tables,
   stateOf,
   selectedId,
@@ -256,6 +271,8 @@ export default function FloorPlan({
   labelFor,
 }: FloorPlanProps) {
   const [quarter, setQuarter] = useState(0)
+  const spin = useRef(0)
+  const drag = useRef<{ on: boolean; x: number }>({ on: false, x: 0 })
   const [shadeQuarter, setShadeQuarter] = useState(0)
   const [zoomMul, setZoomMul] = useState(1)
   const reduced = useMemo(
@@ -277,8 +294,37 @@ export default function FloorPlan({
     setZoomMul((z) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z * (e.deltaY > 0 ? 0.92 : 1.087))))
   }, [])
 
+  /* Drag spins the room about its own axis. Deliberately not an orbit: the
+     camera never moves, so the isometric projection survives. */
+  const spinHandlers = freeSpin
+    ? {
+        onPointerDown: (e: React.PointerEvent) => {
+          drag.current = { on: true, x: e.clientX }
+          ;(e.currentTarget as HTMLElement).style.cursor = 'grabbing'
+        },
+        onPointerMove: (e: React.PointerEvent) => {
+          if (!drag.current.on) return
+          spin.current += (e.clientX - drag.current.x) * 0.008
+          drag.current.x = e.clientX
+        },
+        onPointerUp: (e: React.PointerEvent) => {
+          drag.current.on = false
+          ;(e.currentTarget as HTMLElement).style.cursor = 'grab'
+        },
+        onPointerLeave: () => {
+          drag.current.on = false
+        },
+      }
+    : {}
+
   return (
-    <div className="scene" ref={wrapper} onWheel={onWheel}>
+    <div
+      className="scene"
+      ref={wrapper}
+      onWheel={onWheel}
+      style={freeSpin ? { cursor: 'grab', touchAction: 'none' } : undefined}
+      {...spinHandlers}
+    >
       <Canvas
         flat
         dpr={[1, 2]}
@@ -294,7 +340,12 @@ export default function FloorPlan({
         }}
       >
         <IsoCamera zoomMul={zoomMul} />
-        <Turntable quarter={quarter} onShadeQuarter={setShadeQuarter} reduced={reduced}>
+        <Turntable
+          quarter={quarter}
+          onShadeQuarter={setShadeQuarter}
+          reduced={reduced}
+          spin={freeSpin ? spin : undefined}
+        >
           <Case quarter={shadeQuarter} />
           <Room quarter={shadeQuarter} />
           <Shadows tables={tables} quarter={shadeQuarter} />
