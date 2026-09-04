@@ -11,6 +11,7 @@ import {
   type GlanceKey,
   type Slice,
 } from './data'
+import { GlanceScene, pickWeather } from './GlanceScene'
 
 /* ------------------------------------------------------------------ *
  * Glance card — whatever is worth a look before the day starts.
@@ -18,9 +19,23 @@ import {
 
 export function GlanceCard({ onOpen }: { onOpen?: (tab: GlanceKey) => void }) {
   const [tab, setTab] = useState<GlanceKey>('weather')
+  /* Picked once per load, from what this hour could plausibly do — so the
+     card is a different day each time you open the demo rather than the
+     same fixed 18° forever. */
+  const weather = useMemo(() => pickWeather(), [])
   const g = GLANCE[tab]
+  const big = tab === 'weather' ? `${weather.temp}°C` : g.big
+  const tag = tab === 'weather' ? weather.copy.label : g.tag
+  const sub = tab === 'weather' ? weather.copy.desc : g.sub
   return (
-    <section className="card card--glance card--open" data-tab={tab} onClick={() => onOpen?.(tab)}>
+    <section
+      className="card card--glance card--open"
+      data-tab={tab}
+      data-mode={tab === 'weather' ? weather.mode : undefined}
+      style={tab === 'weather' ? { background: weather.bg } : undefined}
+      onClick={() => onOpen?.(tab)}
+    >
+      <GlanceScene tab={tab} weather={weather} />
       <nav className="glance__tabs">
         {(Object.keys(GLANCE) as GlanceKey[]).map((k) => (
           <button
@@ -36,8 +51,8 @@ export function GlanceCard({ onOpen }: { onOpen?: (tab: GlanceKey) => void }) {
         ))}
       </nav>
       <div className="glance__head">
-        <span className="glance__big">{g.big}</span>
-        <span className="glance__tag">{g.tag}</span>
+        <span className="glance__big">{big}</span>
+        <span className="glance__tag">{tag}</span>
       </div>
       {'spark' in g && (
         <div className="glance__spark">
@@ -46,7 +61,7 @@ export function GlanceCard({ onOpen }: { onOpen?: (tab: GlanceKey) => void }) {
           ))}
         </div>
       )}
-      <p className="glance__sub">{g.sub}</p>
+      <p className="glance__sub">{sub}</p>
     </section>
   )
 }

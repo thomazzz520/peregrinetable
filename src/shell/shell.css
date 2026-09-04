@@ -27,12 +27,7 @@
   border-bottom: 1px solid var(--pp-line);
 }
 .shell__lockup { display: flex; align-items: center; gap: 14px; white-space: nowrap; }
-.shell__firm {
-  font-family: var(--pp-display);
-  font-size: var(--pp-size-lead);
-  line-height: 1.02;
-  letter-spacing: 0.01em;
-}
+.shell__logo { height: 30px; width: auto; display: block; }
 .shell__rule { width: 1px; height: 30px; background: var(--pp-line); }
 .shell__product { font-size: var(--pp-size-body); line-height: 1.15; }
 .shell__product em { font-style: normal; color: var(--pp-sage-deep); }
@@ -138,13 +133,7 @@
 }
 .splash.is-hiding { opacity: 0; pointer-events: none; }
 .splash__lockup { display: flex; align-items: center; gap: 34px; }
-.splash__firm {
-  font-family: var(--pp-display);
-  font-size: 58px;
-  line-height: 0.96;
-  text-align: right;
-  letter-spacing: 0.005em;
-}
+.splash__logo { width: 300px; height: auto; display: block; }
 .splash__rule { width: 1px; align-self: stretch; background: var(--pp-line); }
 .splash__product { font-size: 28px; line-height: 1.15; }
 .splash__product em { font-style: normal; color: var(--pp-sage-deep); }

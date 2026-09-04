@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import AgentOffice, { type PlatformId } from '../office/AgentOffice'
+import type { PlatformId } from '../office/AgentOffice'
+import { RealFloorScene } from '../office/RealFloor3D'
 import BrainChat from '../brain/BrainChat'
 import Popup from './Popup'
 import Splash from './Splash'
@@ -29,8 +30,6 @@ import '../brain/brain.css'
  * product for a different person that happens to share this database —
  * see `/book` for that.
  */
-
-const DAYS_LEARNED = 120
 
 /** Everything that can open over the office. */
 type View =
@@ -135,11 +134,7 @@ export default function OwnerShell() {
             thing anyone sees, so it says what this is rather than just who
             made it. */}
         <span className="shell__lockup">
-          <span className="shell__firm">
-            Peregrine
-            <br />
-            Partners
-          </span>
+          <img className="shell__logo" src="/brand/wordmark.png" alt="Peregrine Partners" />
           <span className="shell__rule" />
           <span className="shell__product">
             The <em>Venue Brain</em>
@@ -179,11 +174,15 @@ export default function OwnerShell() {
         </div>
         <div className="floor">
           <div className="floor__scene">
-            <AgentOffice
-              daysLearned={DAYS_LEARNED}
+            {/* The coloured islands from the original demo, rather than the
+                monochrome hexagon. Same three targets: an island opens its
+                department, the house opens the room, the brain opens the
+                chat. */}
+            <RealFloorScene
               onOpenBrain={() => setBrainOpen(true)}
-              onOpenDepartment={openDept}
+              onOpenDepartment={(id) => openDept(id as PlatformId)}
               onEnterVenue={() => setView({ kind: 'room' })}
+              waitingByDept={{ bookings: unseen }}
               resetFocus={resetFocus}
             />
           </div>

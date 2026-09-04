@@ -352,3 +352,113 @@
 .pop__body .pg__news li:last-child,
 .pop__body .pg__log2 li:last-child { border-bottom: 0; }
 .pop__body .pg__rows li:last-child { border-bottom: 0; }
+
+/* ------------------------------------------------------------------
+   The glance card's moving background. All CSS shapes — no images, no
+   icon font — so the card carries a sky without carrying a payload.
+   ------------------------------------------------------------------ */
+
+.card--glance { position: relative; border-color: rgba(255,255,255,0.5); }
+.card--glance > * { position: relative; z-index: 1; }
+
+/* the card's own text flips with the sky */
+.card--glance[data-mode='light'] .glance__big,
+.card--glance[data-mode='light'] .glance__tab.is-on { color: #0F2A40; }
+.card--glance[data-mode='light'] .glance__tab { color: rgba(15,42,64,0.55); }
+.card--glance[data-mode='light'] .glance__tab.is-on { background: rgba(255,255,255,0.45); }
+.card--glance[data-mode='light'] .glance__tag { background: rgba(255,255,255,0.55); color: #0F2A40; }
+.card--glance[data-mode='light'] .glance__sub { color: rgba(15,42,64,0.72); }
+.card--glance[data-mode='dark'] .glance__big { color: #FBFBF9; }
+.card--glance[data-mode='dark'] .glance__tab { color: rgba(255,255,255,0.55); }
+.card--glance[data-mode='dark'] .glance__tab.is-on { color: #FBFBF9; background: rgba(255,255,255,0.16); }
+.card--glance[data-mode='dark'] .glance__tag { background: rgba(255,255,255,0.16); color: #FBFBF9; }
+.card--glance[data-mode='dark'] .glance__sub { color: rgba(255,255,255,0.78); }
+
+.weatherScene, .trafficScene, .newsScene {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+  border-radius: var(--pp-radius-soft-card);
+}
+
+/* The disc and its rays share a wrapper, so drifting and spinning move them
+   together rather than the ring wobbling around a different pivot. */
+.sunGroup { position: absolute; right: 12px; top: 6px; width: 78px; height: 78px; animation: sunDrift 9s ease-in-out infinite; }
+.sunCore {
+  position: absolute; inset: 14px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 32%, #FFF6D6, #FFD866 55%, #FBB63E 100%);
+  box-shadow: 0 0 34px 10px rgba(255,214,102,0.55);
+}
+.sunRays { position: absolute; inset: -26px; animation: sunSpin 60s linear infinite; }
+/* Each ray starts past the disc's own radius and glow; from the centre they
+   render entirely underneath the opaque disc and look like they vanished. */
+.sunRays i {
+  position: absolute; left: 50%; top: 50%; width: 2px; height: 15px;
+  margin-left: -1px; margin-top: 24px;
+  background: rgba(255,214,102,0.65); border-radius: 2px; transform-origin: 50% -24px;
+}
+@keyframes sunDrift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes sunSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* A pill plus two puffs. A plain rounded rect reads as a stray UI artifact
+   rather than a cloud. */
+.weatherCloud { position: absolute; background: rgba(255,255,255,0.85); border-radius: 999px; }
+.weatherCloud::before, .weatherCloud::after { content: ''; position: absolute; background: inherit; border-radius: 50%; }
+.weatherCloud::before { width: 58%; height: 150%; top: -50%; left: 6%; }
+.weatherCloud::after { width: 50%; height: 150%; top: -50%; right: 4%; }
+.weatherCloud.heavy { background: rgba(255,255,255,0.94); }
+
+.rainDrop {
+  position: absolute; top: 26px; width: 2px; height: 13px; border-radius: 2px;
+  background: linear-gradient(rgba(200,224,255,0), rgba(200,224,255,0.85));
+  animation: rainFall linear infinite;
+}
+@keyframes rainFall { 0% { transform: translateY(0); opacity: 0; } 12% { opacity: 0.9; } 100% { transform: translateY(150px); opacity: 0.15; } }
+.hailDot {
+  position: absolute; top: 26px; width: 5px; height: 5px; border-radius: 50%;
+  background: #F3F8FF; box-shadow: 0 0 3px rgba(180,205,230,0.9);
+  animation: hailFall linear infinite;
+}
+@keyframes hailFall { 0% { transform: translateY(0) rotate(0deg); opacity: 0; } 14% { opacity: 1; } 100% { transform: translateY(150px) rotate(140deg); opacity: 0.25; } }
+.fogBand {
+  position: absolute; left: -12%; width: 124%; height: 15px; border-radius: 999px;
+  background: rgba(255,255,255,0.6); filter: blur(3px);
+  animation: fogDrift ease-in-out infinite alternate;
+}
+@keyframes fogDrift { from { transform: translateX(-5%); } to { transform: translateX(5%); } }
+.star { position: absolute; border-radius: 50%; background: #FFFFFF; animation: starTwinkle ease-in-out infinite; }
+@keyframes starTwinkle { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+.moonCrescent {
+  position: absolute; right: 20px; top: 10px; width: 42px; height: 42px; border-radius: 50%;
+  background: #F3ECD8; box-shadow: -13px -3px 0 3px #16213A, 0 0 20px rgba(243,236,216,0.35);
+}
+
+/* ---- foot traffic: warm sunlit pavement, the office's own silhouettes ---- */
+.card--glance[data-tab='traffic'] {
+  background: linear-gradient(165deg, #E8966F 0%, #EFB088 38%, #F7D9C2 78%, #FCEEE3 100%);
+}
+.card--glance[data-tab='traffic'] .glance__big { color: #3A2014; }
+.card--glance[data-tab='traffic'] .glance__tab { color: rgba(58,32,20,0.55); }
+.card--glance[data-tab='traffic'] .glance__tab.is-on { color: #3A2014; background: rgba(255,255,255,0.45); }
+.card--glance[data-tab='traffic'] .glance__tag { background: rgba(255,255,255,0.55); color: #7C3A1F; }
+.card--glance[data-tab='traffic'] .glance__sub { color: rgba(58,32,20,0.72); }
+.card--glance[data-tab='traffic'] .glance__spark i { background: rgba(58,32,20,0.32); }
+.trafficWalk { position: absolute; bottom: 14px; width: 9px; height: 20px; animation-name: walkBob, walkAcross; animation-timing-function: ease-in-out, linear; animation-iteration-count: infinite, infinite; }
+.trafficWalk::before { content: ''; position: absolute; left: 1.5px; top: 0; width: 6px; height: 6px; border-radius: 50%; background: rgba(58,32,20,0.55); }
+.trafficWalk::after { content: ''; position: absolute; left: 0; top: 7px; width: 9px; height: 12px; border-radius: 4px; background: rgba(58,32,20,0.55); }
+@keyframes walkBob { 0%, 100% { margin-top: 0; } 50% { margin-top: -2px; } }
+@keyframes walkAcross { from { left: -5%; } to { left: 105%; } }
+.trafficGround { position: absolute; left: 0; right: 0; bottom: 10px; height: 1px; background: rgba(58,32,20,0.18); }
+
+/* ---- news: editorial navy, a market line ticking behind the headline ---- */
+.card--glance[data-tab='news'] {
+  background: linear-gradient(165deg, #1C2A42 0%, #223252 45%, #2E4266 100%);
+  border-color: rgba(255,255,255,0.12);
+}
+.card--glance[data-tab='news'] .glance__big { color: #FBFBF9; }
+.card--glance[data-tab='news'] .glance__tab { color: rgba(255,255,255,0.55); }
+.card--glance[data-tab='news'] .glance__tab.is-on { color: #FBFBF9; background: rgba(255,255,255,0.14); }
+.card--glance[data-tab='news'] .glance__tag { background: rgba(128,208,184,0.2); color: #9FE6CC; }
+.card--glance[data-tab='news'] .glance__sub { color: rgba(251,251,249,0.72); }
+.newsLine { position: absolute; right: 0; bottom: 0; width: 62%; height: 70%; }
+.newsPulse { position: absolute; right: 12px; top: 26%; width: 6px; height: 6px; border-radius: 50%; background: #80D0B8; }
+.newsPulse::after { content: ''; position: absolute; inset: -5px; border-radius: 50%; border: 1.5px solid #80D0B8; animation: newsPing 2.2s ease-out infinite; }
+@keyframes newsPing { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(1.9); opacity: 0; } }
