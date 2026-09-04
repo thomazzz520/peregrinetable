@@ -1,3 +1,8 @@
+/* The shared Peregrine Partners tokens (navy / sage / bone, type and
+   spacing) live in their own file and are namespaced --pp-*, so they sit
+   alongside the Monument Valley palette below without touching it. */
+@import './theme/theme.css';
+
 /* ------------------------------------------------------------------
    Fonts are served from this origin, not Google's. A CDN request would
    disclose every visitor's IP address and user agent to a third party

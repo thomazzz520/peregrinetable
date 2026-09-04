@@ -1,0 +1,72 @@
+/* ------------------------------------------------------------------
+   Peregrine Partners — the DOM half of the design tokens.
+
+   MIRRORS src/theme/tokens.ts. That file is the source of truth: the
+   3D scenes read the TypeScript values directly, because a Three.js
+   material cannot consume a CSS class. Change a value there and here,
+   or not at all.
+
+   Everything is prefixed --pp- so it cannot collide with the --mv-*
+   Monument Valley palette that the booking scene owns in index.css.
+   ------------------------------------------------------------------ */
+
+:root {
+  /* Ink */
+  --pp-ink: #162540;
+  --pp-ink-soft: #3f4a63;
+  --pp-ink-muted: #8a8577;
+
+  /* Ground */
+  --pp-paper: #f4f0e8;
+  --pp-bone: #efe9dd;
+  --pp-clay: #e4dbcb;
+  --pp-sand: #d9cfbc;
+  --pp-panel: #fbf8f2;
+  --pp-line: #e2d9c8;
+
+  /* Accent — sage rests, sage-deep is hover / active / selected */
+  --pp-sage: #7fd3b4;
+  --pp-sage-deep: #4fae90;
+
+  /* Status. No red anywhere: nothing here is an emergency. */
+  --pp-ok: #5aa172;
+  --pp-attention: #d9a83e;
+
+  /* Domain tints — admin and bookings are proposed, see tokens.ts */
+  --pp-finance: #9fb090;
+  --pp-marketing: #a3b8d2;
+  --pp-suppliers: #d9bd82;
+  --pp-roster: #d0a8a1;
+  --pp-admin: #94c0b6;
+  --pp-bookings: #b8a8ce;
+
+  /* Type */
+  --pp-display: 'Fraunces', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --pp-body: 'Karla', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --pp-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --pp-size-micro: 9px;
+  --pp-size-caption: 11px;
+  --pp-size-body: 13px;
+  --pp-size-lead: 15px;
+  --pp-size-title: 17px;
+  --pp-size-display: 24px;
+
+  /* Spacing — 4px base */
+  --pp-space-xs: 4px;
+  --pp-space-sm: 8px;
+  --pp-space-md: 12px;
+  --pp-space-lg: 18px;
+  --pp-space-xl: 26px;
+  --pp-space-xxl: 40px;
+
+  /* Radius — two scales on purpose. The hard shell holds soft content.
+     --pp-radius-soft-* is unused until the art-direction scoping in
+     tokens.ts is confirmed; it would breach §0 inside the booking scene. */
+  --pp-radius-none: 0;
+  --pp-radius-hair: 2px;
+  --pp-radius-edge: 3px;
+  --pp-radius-soft-chip: 10px;
+  --pp-radius-soft-card: 14px;
+  --pp-radius-soft-pill: 999px;
+}
