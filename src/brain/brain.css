@@ -1,0 +1,216 @@
+/* ------------------------------------------------------------------
+   Venue brain chat. Everything reads from the shared --pp-* tokens in
+   src/theme/theme.css — no loose hex values below.
+
+   Note the deliberate radius split: the rail, the frame and the buttons
+   are square (--pp-radius-edge), while the message card and the agent
+   chips are soft (--pp-radius-soft-*). A soft object sitting inside a
+   hard frame is the intended reading; do not flatten it.
+   ------------------------------------------------------------------ */
+
+.brain-chat {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  /* Near-solid: at 92% the constellation showed through the message card
+     and made body text hard to read. A whisper of the cloud is enough to
+     say "you are still inside the brain". */
+  background: color-mix(in srgb, var(--pp-paper) 99%, transparent);
+  font-family: var(--pp-body);
+  color: var(--pp-ink);
+}
+
+/* ---- department rail ---- */
+.brain-rail {
+  flex: 0 0 232px;
+  border-right: 1px solid var(--pp-line);
+  padding: var(--pp-space-lg) var(--pp-space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pp-space-xs);
+  background: var(--pp-bone);
+}
+.brain-rail__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--pp-space-md);
+}
+.brain-rail__mark {
+  font-family: var(--pp-display);
+  font-size: var(--pp-size-lead);
+}
+.brain-attn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--pp-size-micro);
+  font-weight: 600;
+  color: var(--pp-attention);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.brain-deptbtn {
+  display: flex;
+  align-items: center;
+  gap: var(--pp-space-sm);
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-left: 2px solid transparent;
+  border-radius: var(--pp-radius-edge);
+  background: transparent;
+  font: inherit;
+  font-size: var(--pp-size-body);
+  color: var(--pp-ink);
+  text-align: left;
+  cursor: pointer;
+}
+.brain-deptbtn:hover { background: color-mix(in srgb, var(--pp-panel) 70%, transparent); }
+.brain-deptbtn.is-on {
+  background: var(--pp-panel);
+  border-left-color: var(--pp-sage-deep);
+}
+.brain-deptbtn__tint { width: 8px; height: 8px; border-radius: var(--pp-radius-soft-pill); flex: none; }
+.brain-deptbtn__name { flex: 1; }
+
+/* ---- conversation ---- */
+.brain-conv { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: var(--pp-space-lg); }
+.brain-conv__head { display: flex; align-items: center; justify-content: space-between; }
+.brain-conv__title { font-family: var(--pp-display); font-size: var(--pp-size-title); font-weight: 500; margin: 0; }
+.brain-close {
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-radius-edge);
+  background: var(--pp-panel);
+  width: 28px; height: 28px;
+  font-size: 17px; line-height: 1;
+  color: var(--pp-ink-soft);
+  cursor: pointer;
+}
+
+/* ---- the people in this department ---- */
+.brain-people { display: flex; gap: var(--pp-space-sm); flex-wrap: wrap; margin: var(--pp-space-md) 0; }
+.brain-person {
+  display: flex; align-items: center; gap: 7px;
+  padding: 5px 11px 5px 5px;
+  border: 1px solid var(--pp-line);
+  /* soft: a chip is an object, not part of the frame */
+  border-radius: var(--pp-radius-soft-pill);
+  background: var(--pp-panel);
+  font: inherit; font-size: var(--pp-size-caption);
+  cursor: pointer;
+}
+.brain-person.is-on { border-color: var(--pp-sage-deep); background: var(--pp-bone); }
+.brain-person__name { font-weight: 600; }
+.brain-person__job { color: var(--pp-ink-muted); }
+
+.brain-avatar {
+  position: relative;
+  width: 24px; height: 24px;
+  border-radius: var(--pp-radius-soft-pill);
+  display: grid; place-items: center;
+  font-family: var(--pp-display); font-size: var(--pp-size-caption);
+  color: var(--pp-panel);
+  flex: none;
+}
+.brain-dot {
+  width: 8px; height: 8px;
+  border-radius: var(--pp-radius-soft-pill);
+  display: inline-block; flex: none;
+}
+.brain-avatar .brain-dot {
+  position: absolute; right: -1px; bottom: -1px;
+  border: 1.5px solid var(--pp-panel);
+}
+.brain-dot--ok { background: var(--pp-ok); }
+.brain-dot--attention { background: var(--pp-attention); }
+
+/* ---- messages ---- */
+.brain-msgs { flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px; }
+.brain-greeting {
+  font-family: var(--pp-display);
+  font-size: var(--pp-size-lead);
+  color: var(--pp-ink);
+  margin: 0 0 var(--pp-space-md);
+}
+.brain-msg {
+  background: var(--pp-panel);
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-radius-soft-card);
+  padding: var(--pp-space-md) var(--pp-space-lg);
+  max-width: 62ch;
+}
+.brain-msg__who {
+  font-family: var(--pp-mono);
+  font-size: var(--pp-size-micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--pp-ink-muted);
+  margin-bottom: 6px;
+}
+.brain-msg__body { margin: 0; font-size: var(--pp-size-body); line-height: 1.55; }
+.brain-num { font-family: var(--pp-mono); font-weight: 600; }
+
+.brain-action { margin-top: var(--pp-space-md); padding-top: var(--pp-space-md); border-top: 1px solid var(--pp-line); }
+.brain-action__label {
+  font-family: var(--pp-mono);
+  font-size: var(--pp-size-micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--pp-ink-muted);
+  margin-bottom: var(--pp-space-sm);
+}
+.brain-action__btns { display: flex; gap: var(--pp-space-sm); flex-wrap: wrap; }
+.brain-btn {
+  /* square: buttons are frame, not content */
+  border-radius: var(--pp-radius-edge);
+  padding: 8px 14px;
+  font: inherit; font-size: var(--pp-size-caption); font-weight: 600;
+  cursor: pointer;
+}
+.brain-btn--primary { border: 1px solid var(--pp-sage-deep); background: var(--pp-sage-deep); color: var(--pp-panel); }
+.brain-btn--primary:hover { background: var(--pp-ink); border-color: var(--pp-ink); }
+.brain-btn--ghost { border: 1px solid var(--pp-line); background: transparent; color: var(--pp-ink-soft); }
+.brain-btn--ghost:hover { border-color: var(--pp-ink-soft); }
+.brain-done { margin: 0; font-size: var(--pp-size-caption); color: var(--pp-ok); font-weight: 600; }
+
+.brain-chips { display: flex; gap: var(--pp-space-sm); flex-wrap: wrap; margin-top: var(--pp-space-md); }
+.brain-chip {
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-radius-soft-pill);
+  background: transparent;
+  padding: 6px 13px;
+  font: inherit; font-size: var(--pp-size-caption);
+  color: var(--pp-ink-soft);
+  cursor: pointer;
+}
+.brain-chip:hover { border-color: var(--pp-sage-deep); color: var(--pp-ink); }
+
+@media (max-width: 720px) {
+  .brain-chat { flex-direction: column; }
+  .brain-rail { flex: none; flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--pp-line); }
+  .brain-rail__head { display: none; }
+}
+
+/* ---- the brain's own frame, hint and demo scrubber ---- */
+.brain-root { position: relative; width: 100%; height: 100%; background: var(--pp-paper); overflow: hidden; }
+.brain-hint {
+  position: absolute; left: 0; right: 0; bottom: var(--pp-space-xl);
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  pointer-events: none;
+  font-family: var(--pp-mono);
+  font-size: var(--pp-size-micro);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pp-ink-muted);
+}
+.brain-hint__count { color: var(--pp-ink-soft); font-weight: 600; }
+.brain-scrub {
+  position: absolute; left: 50%; transform: translateX(-50%); bottom: 68px;
+  display: flex; align-items: center; gap: var(--pp-space-sm);
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  text-transform: uppercase; letter-spacing: 0.1em; color: var(--pp-ink-muted);
+}
+.brain-scrub input { width: 190px; accent-color: var(--pp-sage-deep); }
+.brain-scrub__n { color: var(--pp-ink); font-weight: 600; min-width: 52px; }
