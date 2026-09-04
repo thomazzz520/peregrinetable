@@ -4,6 +4,9 @@ import BrainChat from '../brain/BrainChat'
 import Popup from './Popup'
 import RunSheet from './RunSheet'
 import { useBookings } from './useBookings'
+import { GlanceCard, RevenueCard, ReviewCard } from '../dashboard/Cards'
+import TaskPanel from '../dashboard/TaskPanel'
+import '../dashboard/dashboard.css'
 import './shell.css'
 import '../brain/brain.css'
 
@@ -61,9 +64,20 @@ export default function OwnerShell() {
   return (
     <div className="shell">
       <header className="shell__bar">
-        <span className="shell__mark">
-          Peregrine Partners
-          <i>Venue brain · operating system</i>
+        {/* The lockup from the standalone demo: the firm's name, a rule, and
+            what the product is. It is the first thing anyone sees, so it says
+            what this is rather than just who made it. */}
+        <span className="shell__lockup">
+          <span className="shell__firm">
+            Peregrine
+            <br />
+            Partners
+          </span>
+          <span className="shell__rule" />
+          <span className="shell__product">
+            The <em>Venue Brain</em>
+            <i>Operating system</i>
+          </span>
         </span>
         <nav className="shell__nav">
           <button
@@ -90,12 +104,22 @@ export default function OwnerShell() {
       </header>
 
       <main className="shell__body">
-        <AgentOffice
-          daysLearned={DAYS_LEARNED}
-          onOpenBrain={() => setBrainOpen(true)}
-          onOpenDepartment={openDept}
-          resetFocus={resetFocus}
-        />
+        <div className="dash">
+          <GlanceCard />
+          <RevenueCard onOpen={() => setDept('finance')} />
+          <ReviewCard />
+        </div>
+        <div className="floor">
+          <div className="floor__scene">
+            <AgentOffice
+              daysLearned={DAYS_LEARNED}
+              onOpenBrain={() => setBrainOpen(true)}
+              onOpenDepartment={openDept}
+              resetFocus={resetFocus}
+            />
+          </div>
+          <TaskPanel />
+        </div>
       </main>
 
       {dept && (
