@@ -208,3 +208,60 @@ export function blockersFor(
     .filter(holdsTable)
     .filter((b) => overlaps(want, bookingSpan(b)))
 }
+
+/* ------------------------------------------------------------------ *
+ * Right-sizing — hold the big tables back
+ * ------------------------------------------------------------------ */
+
+/**
+ * Which table size a party is currently offered.
+ *
+ * Without this a party of two is shown every free table in the room,
+ * books a six-top because it is by the window, and the venue loses the
+ * only table that could have taken a party of six. A host would never do
+ * that: they seat you on the smallest table that fits, and only move you
+ * up once those are gone.
+ *
+ * So: the smallest seat count that fits the party AND still has a free
+ * table at this moment. Everything larger stays out of the offer until
+ * that tier is full, at which point the next size up opens on its own.
+ * Returns null when nothing in the room can take the party.
+ */
+export function offeredSeatSize(
+  slot: Date,
+  partySize: number,
+  allTables: Table[],
+  bookings: Booking[],
+): number | null {
+  const sizes = [...new Set(allTables.map((t) => t.seats))]
+    .filter((s) => s >= partySize)
+    .sort((a, b) => a - b)
+
+  for (const size of sizes) {
+    const free = allTables.some(
+      (t) => t.seats === size && isSlotFree(slot, partySize, bookingsFor(t.id, bookings)),
+    )
+    if (free) return size
+  }
+  return null
+}
+
+/**
+ * `tableStateAt` with the right-sizing rule applied.
+ *
+ * A free table of the wrong tier comes back 'too-small' — not literally
+ * true, but it is the honest answer to "can this party have it?", and it
+ * keeps the guest's floor plan to one meaning: green is yours to take.
+ */
+export function tableOfferAt(
+  table: Table,
+  slot: Date,
+  partySize: number,
+  allTables: Table[],
+  bookings: Booking[],
+): SlotState {
+  const base = tableStateAt(table, slot, partySize, bookings)
+  if (base !== 'available') return base
+  const tier = offeredSeatSize(slot, partySize, allTables, bookings)
+  return tier === null || table.seats === tier ? base : 'too-small'
+}

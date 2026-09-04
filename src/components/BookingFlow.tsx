@@ -5,6 +5,7 @@ import {
   dateLabel,
   listBookings,
   sittingFor,
+  tableOfferAt,
   tableStateAt,
   tables,
   timeLabel,
@@ -69,7 +70,10 @@ export default function BookingFlow({
   const stateOf = useCallback(
     (table: Table): TableState => {
       if (!gate || !chosenAt) return 'available'
-      return toTableState(tableStateAt(table, chosenAt, gate.partySize, bookings))
+      // tableOfferAt, not tableStateAt: a free table a size too big is held
+      // back until every right-sized one is taken, so a party of two cannot
+      // book out the only six-top.
+      return toTableState(tableOfferAt(table, chosenAt, gate.partySize, tables, bookings))
     },
     [gate, chosenAt, bookings],
   )
@@ -83,7 +87,8 @@ export default function BookingFlow({
       revealDock()
       // Offer the time they asked for when this table can actually take it.
       if (gate && chosenAt) {
-        const free = tableStateAt(table, chosenAt, gate.partySize, bookings) === 'available'
+        const free =
+          tableOfferAt(table, chosenAt, gate.partySize, tables, bookings) === 'available'
         setPickedSlot(free ? chosenAt : null)
       }
     },

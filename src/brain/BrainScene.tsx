@@ -1,90 +1,13 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
-import { Group } from 'three'
-import { buildCloud } from './nodeCloud'
-import { accent } from '../theme/tokens'
 
-/** Links inside one department — quiet, the colour of old paper. */
-const WEB_LINE = '#9C8E77'
+import Constellation, { type Rotation } from './Constellation'
+import FirstPaint from '../three/FirstPaint'
 
 const CAM_WIDE = 17
 const CAM_CLOSE = 6.5
 /** The chat opens on the way in, not on arrival, so the two feel like one move. */
 const CAM_CHAT_TRIGGER = 8.2
-
-type Rotation = { x: number; y: number; tx: number; ty: number }
-
-function Constellation({
-  days,
-  dragging,
-  rot,
-}: {
-  days: number
-  dragging: React.RefObject<boolean>
-  /* Owned by BrainScene, which is where the pointer events land. Rotation
-     lives in a ref, never in state: this runs every frame and a setState
-     here would re-render the whole scene sixty times a second. */
-  rot: React.RefObject<Rotation>
-}) {
-  const group = useRef<Group>(null!)
-  const cloud = useMemo(() => buildCloud(days), [days])
-
-  useFrame((_, delta) => {
-    const r = rot.current
-    // Frame-rate independent easing: the original's 0.06-per-frame drift ran
-    // at whatever speed the monitor happened to be.
-    const k = 1 - Math.pow(1 - 0.06, delta * 60)
-    if (!dragging.current) r.ty += 0.0013 * delta * 60
-    r.x += (r.tx - r.x) * k
-    r.y += (r.ty - r.y) * k
-    if (group.current) {
-      group.current.rotation.x = r.x
-      group.current.rotation.y = r.y
-    }
-  })
-
-  return (
-    <group ref={group}>
-      {/* Attributes are declared, not assigned in an effect: an effect sets
-          them after the first frame, by which point three has already
-          computed a bounding sphere from an empty geometry and culled the
-          object for good. `key` rebuilds the buffers when the day count
-          changes; frustumCulled is off because a points cloud's bounds are
-          cheap to get wrong and there is only one of them. */}
-      <points key={`nodes-${cloud.count}`} frustumCulled={false}>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[cloud.positions, 3]} />
-          <bufferAttribute attach="attributes-color" args={[cloud.colors, 3]} />
-        </bufferGeometry>
-        <pointsMaterial
-          size={0.2}
-          vertexColors
-          transparent
-          opacity={0.96}
-          sizeAttenuation
-          depthWrite={false}
-        />
-      </points>
-      <lineSegments key={`web-${cloud.count}`} frustumCulled={false}>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[cloud.web, 3]} />
-        </bufferGeometry>
-        <lineBasicMaterial color={WEB_LINE} transparent opacity={0.42} depthWrite={false} />
-      </lineSegments>
-      <lineSegments key={`cross-${cloud.count}`} frustumCulled={false}>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[cloud.cross, 3]} />
-        </bufferGeometry>
-        <lineBasicMaterial
-          color={accent.sageDeep}
-          transparent
-          opacity={0.72}
-          depthWrite={false}
-        />
-      </lineSegments>
-    </group>
-  )
-}
 
 /**
  * The "you clicked the middle" target.
@@ -109,24 +32,6 @@ function CentreTarget({ onOpen, moved }: { onOpen: () => void; moved: React.RefO
       <meshBasicMaterial visible={false} />
     </mesh>
   )
-}
-
-/**
- * A WebGL canvas mounted on page load sometimes never reaches the screen:
- * it is sized correctly and three really is drawing into it, but the
- * compositor keeps showing an empty layer until something forces a fresh
- * layout pass. Nudging a resize once the canvas is up costs nothing and
- * makes it reliable. The floor plan never showed this because it mounts
- * after the guest has clicked through the form, which forces layout anyway.
- */
-function FirstPaint() {
-  const { gl } = useThree()
-  useEffect(() => {
-    const kick = () => window.dispatchEvent(new Event('resize'))
-    const t = [0, 120, 400].map((ms) => window.setTimeout(kick, ms))
-    return () => t.forEach(window.clearTimeout)
-  }, [gl])
-  return null
 }
 
 /** Eases the camera in and out, and opens the chat on the way in. */

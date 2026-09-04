@@ -1,0 +1,72 @@
+/* ------------------------------------------------------------------
+   Today's runsheet. Reads like the paper book it replaces: time first,
+   table second, everything else in support.
+   ------------------------------------------------------------------ */
+
+.sheet { font-family: var(--pp-body); color: var(--pp-ink); }
+.sheet__top { display: flex; align-items: flex-start; margin-bottom: var(--pp-space-lg); }
+.sheet__date { font-family: var(--pp-display); font-size: var(--pp-size-title); }
+.sheet__tally { font-family: var(--pp-mono); font-size: var(--pp-size-micro); letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--pp-ink-muted); margin-top: 3px; }
+.sheet__print {
+  margin-left: auto;
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-radius-edge);
+  background: var(--pp-paper);
+  padding: 7px 15px;
+  font: inherit; font-size: var(--pp-size-caption); font-weight: 600;
+  color: var(--pp-ink-soft);
+  cursor: pointer;
+}
+.sheet__print:hover { border-color: var(--pp-sage-deep); color: var(--pp-ink); }
+
+.sheet__note { font-size: var(--pp-size-body); color: var(--pp-ink-muted); margin: var(--pp-space-lg) 0; }
+.sheet__note--bad { color: var(--pp-attention); }
+
+.sheet__table { width: 100%; border-collapse: collapse; font-size: var(--pp-size-body); }
+.sheet__table th {
+  text-align: left;
+  font-family: var(--pp-mono);
+  font-size: var(--pp-size-micro);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pp-ink-muted);
+  padding: 0 var(--pp-space-md) var(--pp-space-sm) 0;
+  border-bottom: 1px solid var(--pp-line);
+}
+.sheet__table td { padding: 9px var(--pp-space-md) 9px 0; border-bottom: 1px solid var(--pp-bone); }
+.sheet__table tr.is-off td { color: var(--pp-ink-muted); text-decoration: line-through; }
+
+.sheet__time { font-family: var(--pp-mono); font-weight: 600; white-space: nowrap; }
+.sheet__table-id { font-family: var(--pp-mono); font-weight: 600; white-space: nowrap; }
+/* Table size sits beside the label so the owner can see at a glance that a
+   party of two is not sitting on the only six-top. */
+.sheet__seats {
+  display: inline-block; margin-left: 5px;
+  font-size: var(--pp-size-micro); font-weight: 400; color: var(--pp-ink-muted);
+}
+.sheet__seats::before { content: '·'; margin-right: 4px; }
+.sheet__seats::after { content: ' seats'; }
+.sheet__party { font-family: var(--pp-mono); font-weight: 600; }
+.sheet__phone { font-family: var(--pp-mono); font-size: var(--pp-size-caption); white-space: nowrap; }
+.sheet__notes { color: var(--pp-ink-soft); }
+
+.sheet__status {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  letter-spacing: 0.08em; text-transform: uppercase;
+}
+.sheet__status--confirmed { color: var(--pp-ink-soft); }
+.sheet__status--seated { color: var(--pp-ok); font-weight: 600; }
+.sheet__status--cancelled,
+.sheet__status--no_show { color: var(--pp-attention); }
+
+/* ---- print: the sheet and nothing else ---- */
+@media print {
+  body * { visibility: hidden; }
+  .sheet, .sheet * { visibility: visible; }
+  .sheet { position: absolute; inset: 0; padding: 0; }
+  .sheet__print { display: none; }
+  .sheet__table { font-size: 11px; }
+  .sheet__table td { padding: 6px 10px 6px 0; }
+}

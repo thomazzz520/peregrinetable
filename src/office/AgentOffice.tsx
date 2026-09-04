@@ -14,6 +14,8 @@ import {
   Html,
 } from "@react-three/drei";
 import { motion, AnimatePresence } from "framer-motion";
+import Constellation from "../brain/Constellation";
+import FirstPaint from "../three/FirstPaint";
 
 /* ------------------------------------------------------------------ *
  * Types — all scene state comes in through `agents` / `platforms`.
@@ -53,6 +55,14 @@ export interface AgentOfficeProps {
   agents?: Agent[];
   platforms?: Platform[];
   onSelect?: (agentId: string, platform: PlatformId) => void;
+  /** Fired when the brain on the island is clicked — opens the chat. */
+  onOpenBrain?: () => void;
+  /** Fired when a department platform is clicked — opens its popup. The
+   *  camera still flies to the platform underneath; the popup is what the
+   *  owner reads, the zoom is what tells them where they are. */
+  onOpenDepartment?: (id: PlatformId) => void;
+  /** How long the brain has been learning this venue. Drives its density. */
+  daysLearned?: number;
   className?: string;
 }
 
@@ -845,48 +855,6 @@ function PlatformNode({
  * Hub orb — the same deterministic node web as the dashboard's hub.
  * ------------------------------------------------------------------ */
 
-function buildWeb() {
-  let seed = 20260810;
-  const rnd = () => {
-    seed = (seed * 1664525 + 1013904223) % 4294967296;
-    return seed / 4294967296;
-  };
-  const cx = 65,
-    cy = 65,
-    nodes: { x: number; y: number; core: boolean }[] = [];
-  for (let i = 0; i < 26; i++) {
-    const a = rnd() * Math.PI * 2,
-      r = 6 + Math.sqrt(rnd()) * 34;
-    nodes.push({ x: +(cx + Math.cos(a) * r).toFixed(1), y: +(cy + Math.sin(a) * r).toFixed(1), core: true });
-  }
-  for (let i = 0; i < 5; i++) {
-    const a = rnd() * Math.PI * 2,
-      r = 46 + rnd() * 16;
-    nodes.push({ x: +(cx + Math.cos(a) * r).toFixed(1), y: +(cy + Math.sin(a) * r).toFixed(1), core: false });
-  }
-  const lines: { x1: number; y1: number; x2: number; y2: number; o: number }[] = [];
-  nodes.forEach((n, i) => {
-    const near = nodes
-      .map((m, j) => ({ j, d: Math.hypot(m.x - n.x, m.y - n.y) }))
-      .filter((o) => o.j !== i)
-      .sort((a, b) => a.d - b.d)
-      .slice(0, n.core ? 2 : 1);
-    near.forEach((o) => {
-      lines.push({
-        x1: n.x,
-        y1: n.y,
-        x2: nodes[o.j].x,
-        y2: nodes[o.j].y,
-        o: n.core && nodes[o.j].core ? 0.5 : 0.3,
-      });
-    });
-  });
-  return {
-    nodes: nodes.map((n) => ({ x: n.x, y: n.y, r: n.core ? 1.7 : 2.1, o: n.core ? 0.5 : 0.72 })),
-    lines,
-  };
-}
-
 const HOUSE_H = 1.15;
 const HOUSE_R = 0.85;
 
@@ -942,31 +910,43 @@ function HubBuilding() {
   );
 }
 
-function HubOrb({ onTap }: { onTap: () => void }) {
-  const web = useMemo(() => buildWeb(), []);
-  const compact = useThree((st) => st.size.width) < 520;
-  const px = compact ? 112 : 158;
+/**
+ * The brain, sitting above the hub building on the centre island.
+ *
+ * This was a flat SVG web drawn in an <Html> overlay — a placeholder that
+ * always floated on top of the scene rather than living in it. It is the
+ * real constellation now, the same component the standalone brain page
+ * renders, so the two cannot drift apart.
+ *
+ * A point light rides inside it: the art direction for the office is that
+ * the room is lit as though the brain were the light source, so the island
+ * is brightest and the platforms fall away the further out they sit.
+ */
+function HubBrain({ onTap, daysLearned }: { onTap: () => void; daysLearned: number }) {
+  const [hovered, setHovered] = useState(false);
+  // Low enough to read as sitting on the island rather than floating away
+  // from it, and small enough that the platforms still lead the composition.
   return (
-    <Html position={[0, 6.4, 0]} center zIndexRange={[8, 0]}>
-      <div
-        onClick={onTap}
-        style={{ width: px, height: px, cursor: "pointer", animation: "aoDrift 26s ease-in-out infinite" }}
+    <group position={[0, 3.4, 0]}>
+      <Constellation days={daysLearned} scale={0.3} />
+      <pointLight
+        position={[0, 0, 0]}
+        color="#DFF3E8"
+        intensity={hovered ? 340 : 260}
+        distance={38}
+        decay={2}
+      />
+      {/* Generous invisible target: the cloud itself is mostly empty space
+          and picking individual points would be a lottery. */}
+      <mesh
+        visible={false}
+        onPointerOver={(e) => { e.stopPropagation(); setHovered(true); document.body.style.cursor = "pointer"; }}
+        onPointerOut={(e) => { e.stopPropagation(); setHovered(false); document.body.style.cursor = ""; }}
+        onClick={(e) => { e.stopPropagation(); onTap(); }}
       >
-        <svg
-          width={px}
-          height={px}
-          viewBox="0 0 130 130"
-          style={{ display: "block", animation: "aoSpin 78s linear infinite", transformOrigin: "center" }}
-        >
-          {web.lines.map((l, i) => (
-            <line key={i} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="#6C7466" strokeOpacity={l.o} strokeWidth={0.7} />
-          ))}
-          {web.nodes.map((n, i) => (
-            <circle key={i} cx={n.x} cy={n.y} r={n.r} fill="#26332C" fillOpacity={n.o} />
-          ))}
-        </svg>
-      </div>
-    </Html>
+        <sphereGeometry args={[1.5, 16, 16]} />
+      </mesh>
+    </group>
   );
 }
 
@@ -1089,21 +1069,29 @@ function Scene({
   agents,
   platforms,
   onSelect,
+  onOpenBrain,
+  daysLearned,
   focus,
   setFocus,
 }: {
   agents: Agent[];
   platforms: Platform[];
   onSelect?: (id: string, platform: PlatformId) => void;
+  onOpenBrain?: () => void;
+  daysLearned: number;
   focus: PlatformId | null;
   setFocus: (id: PlatformId | null) => void;
 }) {
   const [auto, setAuto] = useState(false);
 
+  /* Prefer the prop; the CustomEvent stays only so the older standalone
+     demo page keeps working while it is still around. Once nothing listens
+     for it, drop the dispatch. */
   const hub = useCallback(() => {
     setFocus(null);
-    window.dispatchEvent(new CustomEvent("agentoffice-hub"));
-  }, []);
+    if (onOpenBrain) onOpenBrain();
+    else window.dispatchEvent(new CustomEvent("agentoffice-hub"));
+  }, [onOpenBrain, setFocus]);
 
   // Host-driven tour: orbit slowly, settle on one platform, stop.
   useEffect(() => {
@@ -1135,8 +1123,15 @@ function Scene({
         <meshBasicMaterial visible={false} />
       </mesh>
 
-      <ambientLight intensity={0.85} color="#FFFFFF" />
-      <hemisphereLight intensity={0.7} color="#FFFFFF" groundColor="#D8D8D2" />
+      {/* Dimmed from 0.85/0.7. The brain's point light does the lifting now,
+          so the island reads as the brightest thing in the room and the
+          platforms fall off with distance. Fill only — enough that nothing
+          in the far corners goes to pure black. */}
+      {/* Down from 0.85 / 0.7. Fill only — enough that nothing in the far
+          corners goes to pure black, and low enough that the brain's own
+          light is what shapes the room. */}
+      <ambientLight intensity={0.22} color="#FFFFFF" />
+      <hemisphereLight intensity={0.18} color="#E8F5EE" groundColor="#D8D8D2" />
       <directionalLight
         castShadow
         position={[9, 14, 7]}
@@ -1152,9 +1147,10 @@ function Scene({
         shadow-camera-far={60}
       />
 
+      <FirstPaint />
       <Slab radius={HUB_R} position={[0, 0, 0]} onClick={hub} />
       <HubBuilding />
-      <HubOrb onTap={hub} />
+      <HubBrain onTap={hub} daysLearned={daysLearned} />
       <ContactShadows
         position={[0, -SLAB - 0.7, 0]}
         scale={HUB_R * 3}
@@ -1218,10 +1214,20 @@ export default function AgentOffice({
   agents = DEFAULT_AGENTS,
   platforms = DEFAULT_PLATFORMS,
   onSelect,
+  onOpenBrain,
+  onOpenDepartment,
+  daysLearned = 120,
   className = "",
 }: AgentOfficeProps) {
   const box = useRef<HTMLDivElement>(null);
   const [focus, setFocus] = useState<PlatformId | null>(null);
+
+  /* Focus is the camera's business; the popup is the host's. Watching focus
+     rather than wiring a second click keeps the two in step however the
+     platform came to be selected. */
+  useEffect(() => {
+    if (focus) onOpenDepartment?.(focus);
+  }, [focus, onOpenDepartment]);
 
   useEffect(() => {
     if (document.getElementById("agent-office-keyframes")) return;
@@ -1235,7 +1241,7 @@ export default function AgentOffice({
     <div
       ref={box}
       className={className}
-      style={{ position: "relative", width: "100%", height: "100%", background: "#EEEFE8", overflow: "hidden" }}
+      style={{ position: "relative", width: "100%", height: "100%", background: "var(--pp-paper)", overflow: "hidden" }}
     >
       <Suspense fallback={<Loading />}>
         <Canvas
@@ -1255,6 +1261,8 @@ export default function AgentOffice({
             agents={agents}
             platforms={platforms}
             onSelect={onSelect}
+            onOpenBrain={onOpenBrain}
+            daysLearned={daysLearned}
             focus={focus}
             setFocus={setFocus}
           />
