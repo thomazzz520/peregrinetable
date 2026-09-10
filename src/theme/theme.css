@@ -32,7 +32,8 @@
   --pp-ok: #5aa172;
   --pp-attention: #d9a83e;
 
-  /* Domain tints — admin and bookings are proposed, see tokens.ts */
+  /* Domain tints — the five are locked, design doc §2. Mirror of tokens.ts.
+     --pp-bookings is a leftover from Booking's old plate. */
   --pp-finance: #d9bd82;
   --pp-marketing: #a3b8d2;
   --pp-suppliers: #9fb090;

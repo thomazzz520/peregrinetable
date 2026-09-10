@@ -64,18 +64,17 @@ export const status = {
  * Muted domain tints — one per department, used for card washes, node
  * colours in the brain, and platform tints in the office.
  *
- * The first four are the brain's existing values. `admin` and `bookings`
- * are proposed, not inherited: the office scene has six platforms and the
- * brain only ever defined four. They sit in the two clear gaps in the hue
- * circle (teal ~165, violet ~262) at the same muted lightness as the rest,
- * so the set still reads as one family. Swap them if you have better ones.
+ * The five departments are locked in the design doc, Section 2 — admin's
+ * teal included, which had been rendering on the office floor while still
+ * marked proposed here. `bookings` is a leftover from Booking's old plate
+ * and is no longer worn by anything.
  */
 export const domain = {
   finance: '#D9BD82', // gold
   marketing: '#A3B8D2', // blue
   suppliers: '#9FB090', // sage-green
   roster: '#D0A8A1', // rose
-  admin: '#94C0B6', // teal — proposed
+  admin: '#94C0B6', // teal
   bookings: '#B8A8CE', // violet — proposed
 } as const
 
