@@ -5,6 +5,7 @@ import BrainChat from '../brain/BrainChat'
 import Popup from './Popup'
 import Splash from './Splash'
 import RunSheet from './RunSheet'
+import Footer from './Footer'
 import { useBookings } from './useBookings'
 import { GlanceCard, RevenueCard, ReviewCard } from '../dashboard/Cards'
 import {
@@ -200,6 +201,8 @@ export default function OwnerShell() {
           <TaskPanel />
         </div>
       </main>
+
+      <Footer />
 
       {view && (
         <Popup eyebrow={eyebrow} title={title} onClose={close}>

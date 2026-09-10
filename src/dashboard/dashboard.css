@@ -298,7 +298,7 @@
 
 /* ---- new-booking notification, bottom right ---- */
 .ping {
-  position: fixed; right: 26px; bottom: 26px; z-index: 55;
+  position: fixed; right: 26px; bottom: 74px; z-index: 55;
   display: flex; align-items: center; gap: var(--pp-space-md);
   background: var(--pp-ink); color: var(--pp-paper);
   border: 0; border-radius: var(--pp-radius-soft-card);

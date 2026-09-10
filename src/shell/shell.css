@@ -145,3 +145,88 @@
 
 /* ---- the tabs from the old bar ---- */
 .shell__nav { display: flex; gap: 2px; margin-left: var(--pp-space-xxl); }
+
+/* ------------------------------------------------------------------
+   The owner-side dashboard footer.
+   ------------------------------------------------------------------ */
+.shell__footer {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pp-space-lg);
+  padding: 0 var(--pp-space-xl);
+  height: 54px;
+  background: var(--pp-paper);
+  border-top: 1px solid var(--pp-line);
+  font-family: var(--pp-body);
+}
+
+.shell__footer-left {
+  display: flex;
+  align-items: center;
+  gap: var(--pp-space-xl);
+}
+
+.shell__footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shell__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--pp-radius-soft-pill);
+  border: 1px solid var(--pp-line);
+  background: var(--pp-bone);
+  color: var(--pp-ink-soft);
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.shell__icon-btn:hover {
+  background: var(--pp-clay);
+  color: var(--pp-ink);
+  border-color: var(--pp-sand);
+}
+
+.shell__claude-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: var(--pp-radius-soft-pill);
+  border: 1px solid var(--pp-line);
+  background: transparent;
+  font-family: var(--pp-mono);
+  font-size: var(--pp-size-caption);
+  color: var(--pp-ink-soft);
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.shell__claude-badge:hover {
+  background: var(--pp-bone);
+  border-color: var(--pp-clay);
+  color: var(--pp-ink);
+}
+
+.shell__claude-sparkle {
+  font-size: var(--pp-size-caption);
+  line-height: 1;
+  color: var(--pp-ink-soft);
+}
+
+.shell__footer-right {
+  font-family: var(--pp-body);
+  font-size: var(--pp-size-caption);
+  color: var(--pp-ink-muted);
+  white-space: nowrap;
+}
