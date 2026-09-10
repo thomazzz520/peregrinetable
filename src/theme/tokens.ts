@@ -71,12 +71,12 @@ export const status = {
 
 /**
  * Muted domain tints — one per department, used for card washes, node
- * colours in the brain, and platform tints in the office.
+ * colours in the brain, and the ground plates in the office.
  *
- * The five departments are locked in the design doc, Section 2 — admin's
- * teal included, which had been rendering on the office floor while still
- * marked proposed here. `bookings` is a leftover from Booking's old plate
- * and is no longer worn by anything.
+ * All five are locked in the design doc, Section 2. The colour belongs to
+ * the department's ground, not to its cards or its chrome. Do not add a
+ * sixth without adding it there first: a tone per feature is how the set
+ * stops reading as one family.
  */
 export const domain = {
   finance: '#D9BD82', // gold
@@ -84,7 +84,6 @@ export const domain = {
   suppliers: '#9FB090', // sage-green
   roster: '#D0A8A1', // rose
   admin: '#94C0B6', // teal
-  bookings: '#B8A8CE', // violet — proposed
 } as const
 
 export type DomainId = keyof typeof domain

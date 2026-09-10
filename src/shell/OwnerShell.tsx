@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { PlatformId } from '../office/AgentOffice'
+import type { PlatformId } from '../office/departments'
 import { RealFloorScene } from '../office/RealFloor3D'
 import BrainChat from '../brain/BrainChat'
 import Popup from './Popup'
@@ -44,10 +44,10 @@ type View =
   | { kind: 'history' }
   | { kind: 'contact' }
 
+/* Keyed by PlatformId, so this and the office scene's plates are checked
+   against the same five ids. Booking has no entry: it is a view inside
+   Admin's page, not a department. */
 const DEPT_COPY: Record<PlatformId, { title: string; blurb: string }> = {
-  /* No plate of its own any more — booking is a view inside Admin below.
-     The key stays because PlatformId still declares it for AgentOffice. */
-  bookings: { title: 'Bookings', blurb: '' },
   finance: { title: 'Finance', blurb: 'Takings, reconciliation, GST set aside, BAS.' },
   suppliers: { title: 'Suppliers & stock', blurb: 'Ordering, price watch, and what runs out next.' },
   roster: { title: 'Roster', blurb: 'Next week built from availability, skills and your labour budget.' },
@@ -191,7 +191,7 @@ export default function OwnerShell() {
                 chat. */}
             <RealFloorScene
               onOpenBrain={() => setBrainOpen(true)}
-              onOpenDepartment={(id) => openDept(id as PlatformId)}
+              onOpenDepartment={openDept}
               onEnterVenue={() => setView({ kind: 'room' })}
               waitingByDept={{ admin: unseen }}
               resetFocus={resetFocus}

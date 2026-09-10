@@ -35,14 +35,12 @@
   --pp-attention: #7fd3b4;
   --pp-caution: #d9a83e;
 
-  /* Domain tints — the five are locked, design doc §2. Mirror of tokens.ts.
-     --pp-bookings is a leftover from Booking's old plate. */
+  /* Domain tints — all five locked, design doc §2. Mirror of tokens.ts. */
   --pp-finance: #d9bd82;
   --pp-marketing: #a3b8d2;
   --pp-suppliers: #9fb090;
   --pp-roster: #d0a8a1;
   --pp-admin: #94c0b6;
-  --pp-bookings: #b8a8ce;
 
   /* Type */
   --pp-display: 'Fraunces', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;

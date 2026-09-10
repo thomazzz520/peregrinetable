@@ -11,6 +11,7 @@ import { OrbitControls, ContactShadows, Html } from "@react-three/drei";
 import { motion, useSpring, useTransform } from "framer-motion";
 import FirstPaint from "../three/FirstPaint";
 import { domain } from "../theme/tokens";
+import type { PlatformId } from "./departments";
 
 /**
  * RealFloor3D — the same layout, positions, hues and task data as
@@ -44,7 +45,9 @@ type Task = {
 };
 
 type Dept = {
-  id: string;
+  /** The shared department id — the same union OwnerShell keys its page
+   *  copy by, so a plate cannot open a page that does not exist. */
+  id: PlatformId;
   name: string;
   u: number;
   v: number;
@@ -696,7 +699,7 @@ function DeptFeature({
 
 function Island({
   dept, waiting, selected, onSelect,
-}: { dept: Dept; waiting: number; selected: boolean; onSelect: (id: string) => void }) {
+}: { dept: Dept; waiting: number; selected: boolean; onSelect: (id: PlatformId) => void }) {
   const [hovered, setHovered] = useState(false);
   const pos: [number, number, number] = [dept.u, LEVITATE, dept.v];
   const top = toneTop(dept);
@@ -1098,9 +1101,10 @@ function Rig({ focus }: { focus: [number, number] | null }) {
 function Scene({
   waitingByDept, selected, onSelectIsland, onEnterHouse, onEnterBrain,
 }: {
-  waitingByDept: Record<string, number>;
-  selected: string | null;
-  onSelectIsland: (id: string) => void;
+  waitingByDept: Partial<Record<PlatformId, number>>;
+  selected: PlatformId | null;
+  /** "" is the ground plane clearing the selection. */
+  onSelectIsland: (id: PlatformId | "") => void;
   onEnterHouse: (x: number, y: number) => void;
   onEnterBrain: () => void;
 }) {
@@ -1271,7 +1275,7 @@ function StackRow({ dept }: { dept: Dept }) {
 /* ------------------------------------------------------------------ */
 
 export default function RealFloor3D() {
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<PlatformId | null>(null);
   const [states, setStates] = useState<Record<string, TaskState>>(() =>
     Object.fromEntries(ALL_TASKS.map((t) => [t.id, t.state])));
   const panelRef = useRef<HTMLElement>(null);
@@ -1287,11 +1291,11 @@ export default function RealFloor3D() {
   const needsCount = ALL_TASKS.filter((t) => states[t.id] === "needs").length;
 
   const waitingByDept = useMemo(
-    () => Object.fromEntries(DEPTS.map((d) => [d.id, d.tasks.filter((t) => states[t.id] === "needs").length])) as Record<string, number>,
+    () => Object.fromEntries(DEPTS.map((d) => [d.id, d.tasks.filter((t) => states[t.id] === "needs").length])) as Partial<Record<PlatformId, number>>,
     [states],
   );
 
-  function select(id: string) {
+  function select(id: PlatformId | "") {
     setSelected(id || null);
   }
   function approve(id: string) {
@@ -1393,13 +1397,13 @@ export function RealFloorScene({
   waitingByDept = {},
   resetFocus = 0,
 }: {
-  onOpenDepartment?: (id: string) => void;
+  onOpenDepartment?: (id: PlatformId) => void;
   onEnterVenue?: () => void;
   onOpenBrain?: () => void;
-  waitingByDept?: Record<string, number>;
+  waitingByDept?: Partial<Record<PlatformId, number>>;
   resetFocus?: number;
 }) {
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<PlatformId | null>(null);
 
   useEffect(() => {
     if (document.getElementById("real-floor-3d-keyframes")) return;
@@ -1440,7 +1444,7 @@ export function RealFloorScene({
           <Scene
             waitingByDept={waitingByDept}
             selected={selected}
-            onSelectIsland={(id: string) => setSelected(id || null)}
+            onSelectIsland={(id) => setSelected(id || null)}
             onEnterHouse={() => onEnterVenue?.()}
             onEnterBrain={() => onOpenBrain?.()}
           />
