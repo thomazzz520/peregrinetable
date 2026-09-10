@@ -1,7 +1,7 @@
 import type { Booking, NewBooking, Table } from './types.js'
 import { bookingSpan, bookingsFor, holdsTable } from './availability.js'
 import { occupancyMinutes } from './time.js'
-import { tables } from './venue.js'
+import { service, tables } from './venue.js'
 
 /**
  * The rules a booking has to satisfy, in one place and independent of where
@@ -26,7 +26,13 @@ export const LIMITS = {
   email: 120,
   notes: 400,
   partySize: 12,
+  /** A sitting is 90 or 120 minutes. The cap is generous but finite, so a
+   *  single booking cannot hold a table for a year. */
+  durationMin: 240,
 } as const
+
+/** Shortest bookable sitting: one slot. Less than that cannot sit on the grid. */
+const MIN_DURATION_MIN = service.slotMinutes
 
 function tableOf(id: string): Table | undefined {
   return tables.find((t) => t.id === id)
@@ -62,14 +68,43 @@ export function checkBooking(
     return { code: 'unknown-table', message: `There is no table ${candidate.tableId}.` }
   }
 
-  const size = Number(candidate.partySize)
-  if (!Number.isFinite(size) || size < 1 || size > LIMITS.partySize) {
-    return { code: 'bad-field', message: `A party of ${candidate.partySize} is not a party size.` }
+  /* Strict, not coerced: Number() would accept the string "4" and let it
+     through, but the raw value is what gets stored, and sittingFor("7" as
+     number) only works by accident — ">= 5" happens to coerce — so the bug
+     would surface somewhere further away instead of here. */
+  const size = candidate.partySize
+  if (
+    typeof size !== 'number' ||
+    !Number.isInteger(size) ||
+    size < 1 ||
+    size > LIMITS.partySize
+  ) {
+    return { code: 'bad-field', message: `A party of ${String(size)} is not a party size.` }
   }
 
   const start = new Date(candidate.startsAt)
   if (Number.isNaN(start.getTime())) {
     return { code: 'bad-field', message: 'That is not a valid start time.' }
+  }
+
+  /* Checked strictly, like partySize above, because this value is stored
+     exactly as it arrives and is then read back into arithmetic. Number("90")
+     passes a coercing check but "90" is what gets written, and "90" + 15 is
+     "9015", not 105 — which bookingSpan turns into a six-day hold on the
+     table. A non-numeric value is worse still: the span ends at NaN, every
+     overlap comparison against it is false, and the booking silently stops
+     blocking its own table. */
+  const duration = candidate.durationMin
+  if (
+    typeof duration !== 'number' ||
+    !Number.isInteger(duration) ||
+    duration < MIN_DURATION_MIN ||
+    duration > LIMITS.durationMin
+  ) {
+    return {
+      code: 'bad-field',
+      message: `A sitting of ${String(duration)} minutes is not a duration.`,
+    }
   }
 
   if (table.seats < size) {
