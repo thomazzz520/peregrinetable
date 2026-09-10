@@ -731,7 +731,20 @@ function Island({
         <Desk key={i} position={d.pos} rotation={d.rot} label={dept.desks[i].label} />
       ))}
 
-      <Html position={[-(dept.size + 0.55), 0.05, 0]} center zIndexRange={[4, 0]}>
+      {/* Anchored outward along this plate's own radial axis. The old offset
+          was a fixed world -X vector, identical for all six plates, which is
+          only correct for a plate sitting on the +X axis — it pushed
+          Suppliers' label inward off its plate and over the hub walkway.
+          distanceFactor brings this label in line with the others in this
+          file (9, 8, 6 above): it now scales with the scene instead of
+          holding 10px at every zoom. 40 keeps it at roughly today's size at
+          the default camera. */}
+      <Html
+        position={[Math.cos(ang) * (dept.size + 0.55), 0.05, Math.sin(ang) * (dept.size + 0.55)]}
+        center
+        zIndexRange={[4, 0]}
+        distanceFactor={40}
+      >
         <div style={{ pointerEvents: "none", userSelect: "none", fontFamily: "IBM Plex Mono, monospace",
           fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase",
           color: selected || hovered ? "#203048" : "#8B9384", whiteSpace: "nowrap", textAlign: "center" }}>
