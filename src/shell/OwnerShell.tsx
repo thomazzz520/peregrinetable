@@ -142,9 +142,7 @@ export default function OwnerShell() {
   return (
     <div className="shell">
       <header className="shell__bar">
-        {/* The firm's name, a rule, and what the product is. It is the first
-            thing anyone sees, so it says what this is rather than just who
-            made it. */}
+        {/* The firm's name, a rule, and what the product is. */}
         <span className="shell__lockup">
           <img className="shell__logo" src="/brand/wordmark.png" alt="Peregrine Partners" />
           <span className="shell__rule" />
@@ -172,9 +170,10 @@ export default function OwnerShell() {
             </button>
           ))}
         </nav>
+        {/* The client's business, at the end of the bar. */}
         <div className="shell__venue">
           <b>The Peacock</b>
-          <span>Jenny's Café · South Yarra</span>
+          <span>Café · South Yarra</span>
         </div>
       </header>
 

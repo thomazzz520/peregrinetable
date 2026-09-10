@@ -49,8 +49,19 @@
   cursor: pointer;
   position: relative;
 }
+/* Hover fills, selected underlines. Both used to be the same bone fill,
+   so a hovered tab was indistinguishable from the open one. The weight
+   change went with it: bolding the label reflowed the whole row. Navy
+   marks the selection because a tab is structure (§2). */
 .shell__tab:hover { background: var(--pp-bone); color: var(--pp-ink); }
-.shell__tab.is-on { background: var(--pp-bone); color: var(--pp-ink); font-weight: 600; }
+.shell__tab.is-on { color: var(--pp-ink); }
+.shell__tab.is-on::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 2px;
+  background: var(--pp-ink);
+}
 /* Unseen bookings — the only number in the chrome, so it stays small. */
 .shell__badge {
   display: inline-block;
@@ -68,8 +79,10 @@
   vertical-align: 1px;
 }
 
-.shell__venue { margin-left: auto; text-align: right; line-height: 1.25; }
-.shell__venue b { font-family: var(--pp-display); font-weight: 500; font-size: var(--pp-size-body); color: var(--pp-sage-deep); }
+/* The client's business, at the right-hand end of the bar. Navy, not sage —
+   sage means "this needs you" (§2), and a venue name is not an ask. */
+.shell__venue { margin-left: auto; text-align: right; line-height: 1.2; }
+.shell__venue b { font-family: var(--pp-display); font-weight: 500; font-size: var(--pp-size-title); color: var(--pp-ink); }
 .shell__venue span { display: block; font-size: var(--pp-size-micro); font-family: var(--pp-mono);
   letter-spacing: 0.12em; text-transform: uppercase; color: var(--pp-ink-muted); }
 
