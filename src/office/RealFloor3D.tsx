@@ -82,7 +82,7 @@ const DEPTS: Dept[] = [
     ],
   },
   {
-    id: "books", n: "002", name: "Finance", u: 0.75, v: -9.75, size: 3.7, tone: "finance",
+    id: "finance", n: "002", name: "Finance", u: 0.75, v: -9.75, size: 3.7, tone: "finance",
     desks: [{ label: "Xero" }, { label: "Square" }, { label: "Bank feed" }],
     stack: [{ label: "Xero" }, { label: "MYOB" }, { label: "Square" }],
     metrics: [["Reconciled", "148 / 150"], ["Payrun", "Lodged"]],
@@ -664,7 +664,7 @@ function DeptFeature({
           <Crate position={[position[0] - 0.25, 0.18, position[2] - 0.05]} color="#E8998D" rotation={-0.4} />
         </group>
       );
-    case "books":
+    case "finance":
       return (
         <group>
           <PieBoard position={position} rotation={rotation} />
