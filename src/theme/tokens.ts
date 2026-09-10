@@ -52,12 +52,21 @@ export const accent = {
   sageDeep: '#4FAE90',
 } as const
 
-/** Agent and department status. Green is "fine", yellow is "needs you".
+/** Agent and department status. Green is "fine", sage is "needs you" —
+ *  never amber or yellow (design doc §10, acceptance check 5).
+ *
+ *  Sage is a light mint. It reads as a dot, or as a fill behind navy text;
+ *  it does not survive as small text on a light ground. `caution` keeps the
+ *  old amber for the things that are bad news rather than an ask — a
+ *  cancellation, a no-show — so that sage stays reserved for "this needs
+ *  you" and nothing else (§2).
+ *
  *  There is deliberately no red: nothing in this product is an emergency,
  *  and a red dot on an owner's dashboard at 6am is a lie. */
 export const status = {
   ok: '#5AA172',
-  attention: '#D9A83E',
+  attention: '#7FD3B4',
+  caution: '#D9A83E',
 } as const
 
 /**

@@ -166,7 +166,7 @@ const C = {
   sand: "#EFEFEC",
   paper: "#FBFBF9",
   ink: "#2B2E28",
-  amber: "#7C2B24",
+  attention: "#7FD3B4", // needs-you — sage, never amber (design doc §10)
   torso: ["#2B2E28", "#33362F", "#26281F"],
 };
 
@@ -770,7 +770,7 @@ function Island({
 
       {waiting > 0 ? (
         <Html position={[0, 1.05, -dept.size * 0.3]} center zIndexRange={[6, 0]}>
-          <div style={{ width: 20, height: 20, borderRadius: "50%", background: C.amber, color: "#F8F8F3",
+          <div style={{ width: 20, height: 20, borderRadius: "50%", background: C.attention, color: "#162540",
             display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700,
             fontFamily: "Inter, sans-serif", boxShadow: "0 2px 6px rgba(32,48,72,0.3)", pointerEvents: "none" }}>
             {waiting}

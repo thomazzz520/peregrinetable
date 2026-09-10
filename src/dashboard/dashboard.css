@@ -332,7 +332,13 @@
 }
 .pg__log2Note { display: block; margin: 3px 0 5px; line-height: 1.45; }
 .pg__log2State { font-size: var(--pp-size-caption); color: var(--pp-ok); }
-.pg__log2State.is-waiting { color: var(--pp-attention); font-weight: 600; }
+.pg__log2State.is-waiting { color: var(--pp-ink); font-weight: 600; }
+/* Sage marks the waiting item, but as a dot rather than as the text: the
+   label has to stay readable on panel white. */
+.pg__log2Dot {
+  display: inline-block; width: 8px; height: 8px; margin-right: 8px;
+  border-radius: var(--pp-radius-soft-pill); background: var(--pp-attention);
+}
 .pg__rowPctWide { color: var(--pp-ink-muted); font-size: var(--pp-size-caption); }
 
 /* The detail panels sit on card-white inside the paper popup, the way the

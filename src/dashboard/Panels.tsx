@@ -280,7 +280,14 @@ export function HistoryPanel() {
               <span className="pg__log2Dept">{l.dept}</span>
               <span className="pg__log2Note">{l.note}</span>
               <span className={`pg__log2State${l.done ? '' : ' is-waiting'}`}>
-                {l.done ? '✓ Done' : '● Waiting on you'}
+                {l.done ? (
+                  '✓ Done'
+                ) : (
+                  <>
+                    <i className="pg__log2Dot" />
+                    Waiting on you
+                  </>
+                )}
               </span>
             </span>
           </li>

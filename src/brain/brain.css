@@ -46,7 +46,9 @@
   gap: 6px;
   font-size: var(--pp-size-micro);
   font-weight: 600;
-  color: var(--pp-attention);
+  /* The adjacent .brain-dot--attention carries the sage. At 9px on bone,
+     sage as text would sit near 2.4:1 and be unreadable. */
+  color: var(--pp-ink);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }

@@ -28,9 +28,12 @@
   --pp-sage: #7fd3b4;
   --pp-sage-deep: #4fae90;
 
-  /* Status. No red anywhere: nothing here is an emergency. */
+  /* Status. Sage is "needs you", never amber (design doc §10). --pp-caution
+     holds the old amber for bad outcomes, which are not asks. No red
+     anywhere: nothing here is an emergency. */
   --pp-ok: #5aa172;
-  --pp-attention: #d9a83e;
+  --pp-attention: #7fd3b4;
+  --pp-caution: #d9a83e;
 
   /* Domain tints — the five are locked, design doc §2. Mirror of tokens.ts.
      --pp-bookings is a leftover from Booking's old plate. */

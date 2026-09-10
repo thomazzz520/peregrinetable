@@ -21,7 +21,17 @@
 .sheet__print:hover { border-color: var(--pp-sage-deep); color: var(--pp-ink); }
 
 .sheet__note { font-size: var(--pp-size-body); color: var(--pp-ink-muted); margin: var(--pp-space-lg) 0; }
-.sheet__note--bad { color: var(--pp-attention); }
+/* Amber marks the note, it is not the note: --pp-caution as 13px text on
+   paper sits at 2.1:1. The dot carries the colour, the words stay ink at
+   14.8:1, the same split the sage "needs you" states use. */
+.sheet__note--bad { color: var(--pp-ink); }
+.sheet__note--bad::before {
+  content: '';
+  display: inline-block;
+  width: 8px; height: 8px; margin-right: 8px;
+  border-radius: var(--pp-radius-soft-pill);
+  background: var(--pp-caution);
+}
 
 .sheet__table { width: 100%; border-collapse: collapse; font-size: var(--pp-size-body); }
 .sheet__table th {
@@ -58,8 +68,17 @@
 }
 .sheet__status--confirmed { color: var(--pp-ink-soft); }
 .sheet__status--seated { color: var(--pp-ok); font-weight: 600; }
+/* A chip, not coloured text — 9px amber on paper was 2.1:1. Ink on the
+   amber fill is 7.0:1, and the fill reads as a status at a glance. */
 .sheet__status--cancelled,
-.sheet__status--no_show { color: var(--pp-attention); }
+.sheet__status--no_show {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: var(--pp-radius-soft-pill);
+  background: var(--pp-caution);
+  color: var(--pp-ink);
+  font-weight: 600;
+}
 
 /* ---- print: the sheet and nothing else ---- */
 @media print {
@@ -69,4 +88,14 @@
   .sheet__print { display: none; }
   .sheet__table { font-size: 11px; }
   .sheet__table td { padding: 6px 10px 6px 0; }
+  /* Browsers drop background fills when printing, which would leave the
+     cancelled/no-show chip as bare ink with nothing marking it. On paper
+     the underline does that job instead. */
+  .sheet__status--cancelled,
+  .sheet__status--no_show {
+    padding: 0;
+    background: none;
+    text-decoration: underline;
+  }
+  .sheet__note--bad::before { display: none; }
 }

@@ -48,7 +48,7 @@ export interface Platform {
   title: string;
   agentCount: number;
   stats: PlatformStat[];
-  /** shown in amber on the card when set */
+  /** shown on the card as a sage "needs you" flag when set */
   attention?: string;
 }
 
@@ -87,7 +87,7 @@ const C = {
   paper: "#FBFBF9", // ground / scene background
   cream: "#FFFFFF", // heads
   ink: "#2B2E28",
-  amber: "#7C2B24", // needs-you
+  attention: "#7FD3B4", // needs-you — sage, never amber (design doc §10)
   green: "#5B6A58",
   torso: ["#2B2E28", "#33362F", "#26281F"], // near-monochrome charcoal
 };
@@ -382,8 +382,8 @@ function Worker({ agent, position, live, onSelect, onHoverChange }: WorkerProps)
                 borderRadius: "50%",
                 fontSize: compact ? 9 : 12,
                 fontWeight: 500,
-                color: "#F8F8F3",
-                background: C.amber,
+                color: "#162540",
+                background: C.attention,
                 fontFamily: "Archivo, Helvetica, Arial, sans-serif",
                 boxShadow: "0 1px 3px rgba(38,51,44,0.18)",
               }}
