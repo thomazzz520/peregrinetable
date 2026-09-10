@@ -33,9 +33,9 @@
   --pp-attention: #d9a83e;
 
   /* Domain tints — admin and bookings are proposed, see tokens.ts */
-  --pp-finance: #9fb090;
+  --pp-finance: #d9bd82;
   --pp-marketing: #a3b8d2;
-  --pp-suppliers: #d9bd82;
+  --pp-suppliers: #9fb090;
   --pp-roster: #d0a8a1;
   --pp-admin: #94c0b6;
   --pp-bookings: #b8a8ce;

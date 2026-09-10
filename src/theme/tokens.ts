@@ -71,9 +71,9 @@ export const status = {
  * so the set still reads as one family. Swap them if you have better ones.
  */
 export const domain = {
-  finance: '#9FB090', // soft sage
+  finance: '#D9BD82', // gold
   marketing: '#A3B8D2', // blue
-  suppliers: '#D9BD82', // gold
+  suppliers: '#9FB090', // sage-green
   roster: '#D0A8A1', // rose
   admin: '#94C0B6', // teal — proposed
   bookings: '#B8A8CE', // violet — proposed

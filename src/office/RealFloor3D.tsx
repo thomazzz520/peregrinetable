@@ -10,6 +10,7 @@ import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber"
 import { OrbitControls, ContactShadows, Html } from "@react-three/drei";
 import { motion, useSpring, useTransform } from "framer-motion";
 import FirstPaint from "../three/FirstPaint";
+import { domain } from "../theme/tokens";
 
 /**
  * RealFloor3D — the same layout, positions, hues and task data as
@@ -49,7 +50,9 @@ type Dept = {
   v: number;
   size: number;
   own?: boolean;
-  hue: number;
+  /** Which locked department tone this plate wears (design doc §2). The
+   *  colour itself lives in tokens.ts — never a literal here. */
+  tone: keyof typeof domain;
   n: string;
   desks: { label: string; own?: boolean }[];
   stack: { label: string; own?: boolean }[];
@@ -64,7 +67,7 @@ type Dept = {
    entry in Section 10. */
 const DEPTS: Dept[] = [
   {
-    id: "suppliers", n: "001", name: "Suppliers & stock", u: 9.75, v: -0.75, size: 3.7, hue: 152,
+    id: "suppliers", n: "001", name: "Suppliers & stock", u: 9.75, v: -0.75, size: 3.7, tone: "suppliers",
     desks: [{ label: "Ordermentum" }, { label: "Fresho" }, { label: "Par levels" }],
     stack: [{ label: "Ordermentum" }, { label: "Fresho" }, { label: "Bidfood" }],
     metrics: [["Lines checked", "14"], ["Orders drafted", "3"]],
@@ -79,7 +82,7 @@ const DEPTS: Dept[] = [
     ],
   },
   {
-    id: "books", n: "002", name: "Finance", u: 0.75, v: -9.75, size: 3.7, hue: 328,
+    id: "books", n: "002", name: "Finance", u: 0.75, v: -9.75, size: 3.7, tone: "finance",
     desks: [{ label: "Xero" }, { label: "Square" }, { label: "Bank feed" }],
     stack: [{ label: "Xero" }, { label: "MYOB" }, { label: "Square" }],
     metrics: [["Reconciled", "148 / 150"], ["Payrun", "Lodged"]],
@@ -91,7 +94,7 @@ const DEPTS: Dept[] = [
     ],
   },
   {
-    id: "admin", n: "004", name: "Admin", u: -9.0, v: -9.0, size: 3.7, hue: 262,
+    id: "admin", n: "004", name: "Admin", u: -9.0, v: -9.0, size: 3.7, tone: "admin",
     desks: [
       { label: "Website", own: true }, { label: "Email" }, { label: "Phone", own: true },
       /* folded in from Booking */
@@ -122,7 +125,7 @@ const DEPTS: Dept[] = [
     ],
   },
   {
-    id: "marketing", n: "003", name: "Marketing", u: -0.75, v: 9.75, size: 3.7, hue: 192,
+    id: "marketing", n: "003", name: "Marketing", u: -0.75, v: 9.75, size: 3.7, tone: "marketing",
     desks: [{ label: "Instagram" }, { label: "Meta Ads" }, { label: "Google" }, { label: "Guest CRM", own: true }],
     stack: [{ label: "Guest CRM", own: true }, { label: "Instagram" }, { label: "Meta Ads" }, { label: "Google Business" }],
     metrics: [["Creatives queued", "3"], ["Spend", "$180 / $250"]],
@@ -135,7 +138,7 @@ const DEPTS: Dept[] = [
     ],
   },
   {
-    id: "roster", n: "007", name: "Rostering", u: -9.75, v: 0.75, size: 3.7, hue: 42,
+    id: "roster", n: "007", name: "Rostering", u: -9.75, v: 0.75, size: 3.7, tone: "roster",
     desks: [{ label: "Deputy" }, { label: "Award rates" }],
     stack: [{ label: "Deputy" }, { label: "Tanda" }],
     metrics: [["Saturday draft", "28.1%"], ["Timesheets", "Approved"]],
@@ -176,8 +179,21 @@ const HOUSE_R = 1.05;
  *  nowhere real to descend to — it just reads as a block glued to the side. */
 const LEVITATE = 1.3;
 
-function hueTop(h: number) { return new THREE.Color(`hsl(${h}, 62%, 88%)`); }
-function hueSide(h: number) { return new THREE.Color(`hsl(${h}, 66%, 62%)`); }
+/* The department tones come from tokens.ts, so the office, the brain and
+   the dashboard cannot drift apart — which is exactly how Finance ended up
+   pink and Roster gold while the tokens said gold and rose. The riser wears
+   the token colour; the cap is the same colour lifted toward white, which
+   is what keeps the top bright and the seam between them hard. */
+const WHITE = new THREE.Color("#FFFFFF");
+function toneSide(d: Dept) { return new THREE.Color(domain[d.tone]); }
+function toneTop(d: Dept) { return toneSide(d).lerp(WHITE, 0.62); }
+/** The same token as a hue in degrees, for the flat SVG and CSS surfaces
+ *  that still want an hsl() string rather than a THREE.Color. */
+function toneHue(d: Dept) {
+  const hsl = { h: 0, s: 0, l: 0 };
+  toneSide(d).getHSL(hsl);
+  return Math.round(hsl.h * 360);
+}
 
 function hash(str: string) {
   let h = 2166136261;
@@ -683,8 +699,8 @@ function Island({
 }: { dept: Dept; waiting: number; selected: boolean; onSelect: (id: string) => void }) {
   const [hovered, setHovered] = useState(false);
   const pos: [number, number, number] = [dept.u, LEVITATE, dept.v];
-  const top = hueTop(dept.hue);
-  const side = hueSide(dept.hue);
+  const top = toneTop(dept);
+  const side = toneSide(dept);
   const desks = useMemo(() => deskLayout(dept.desks.length), [dept.desks.length]);
 
   // Everything below is local to this island's own group (already translated
@@ -774,7 +790,7 @@ function Island({
 /** The department hues, so each knowledge-node in the brain can be coloured
  *  by which department's learning it represents — the same hue that
  *  department's island wears. */
-const DEPT_HUES = DEPTS.map((d) => d.hue);
+const DEPT_HUES = DEPTS.map(toneHue);
 
 function buildWeb() {
   let seed = 20260810;
@@ -937,7 +953,7 @@ function DataFlow({ dept }: { dept: Dept }) {
   const outer = len - dept.size - 0.1;
   const count = 3;
   const refs = useRef<(THREE.Mesh | null)[]>([]);
-  const color = useMemo(() => hueSide(dept.hue), [dept.hue]);
+  const color = useMemo(() => toneSide(dept), [dept]);
   useFrame((state) => {
     const t = state.clock.elapsedTime;
     for (let i = 0; i < count; i++) {
@@ -1170,7 +1186,7 @@ function TaskRow({ task, state, dept, onApprove }: { task: Task; state: TaskStat
   const done = state === "done" && task.state === "needs";
   const text = done ? task.doneText ?? task.text : task.text;
   const time = done ? task.doneTime ?? task.time : task.time;
-  const hue = dept.hue;
+  const hue = toneHue(dept);
   const wash = `hsl(${hue}, 55%, 97%)`;
   const border = `hsl(${hue}, 45%, 89%)`;
   const deptInk = `hsl(${hue}, 55%, 38%)`;
