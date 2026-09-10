@@ -1,5 +1,5 @@
 import type { Booking, NewBooking } from '../src/data/types.js'
-import { checkBooking, sanitise } from '../src/data/rules.js'
+import { checkBooking, isBookingStatus, sanitise } from '../src/data/rules.js'
 import { venueDateKey } from '../src/data/time.js'
 import {
   COOKIE,
@@ -195,6 +195,14 @@ export async function handle(req: ApiRequest, config: Config): Promise<ApiRespon
     if (i === -1) return json(404, { error: 'No such booking.' })
 
     const patch = sanitise((req.body ?? {}) as Partial<Booking>)
+
+    /* The guard below is an allowlist of two, so an unrecognised status used
+       to fail both arms, skip checkBooking entirely and persist anyway. The
+       body is cast, not parsed, so the status has to be checked at runtime. */
+    if ('status' in patch && !isBookingStatus(patch.status)) {
+      return json(400, { error: `${JSON.stringify(patch.status)} is not a booking status.` })
+    }
+
     const next: Booking = { ...all[i], ...patch, id: all[i].id }
 
     if (next.status === 'confirmed' || next.status === 'seated') {

@@ -1,4 +1,4 @@
-import type { Booking, NewBooking, Table } from './types.js'
+import type { Booking, BookingStatus, NewBooking, Table } from './types.js'
 import { bookingSpan, bookingsFor, holdsTable } from './availability.js'
 import { occupancyMinutes } from './time.js'
 import { service, tables } from './venue.js'
@@ -33,6 +33,19 @@ export const LIMITS = {
 
 /** Shortest bookable sitting: one slot. Less than that cannot sit on the grid. */
 const MIN_DURATION_MIN = service.slotMinutes
+
+/** The four states a booking can be in, as a runtime list. The type alone is
+ *  no help against a value that arrived from a request body. */
+export const BOOKING_STATUSES: readonly BookingStatus[] = [
+  'confirmed',
+  'seated',
+  'cancelled',
+  'no_show',
+]
+
+export function isBookingStatus(value: unknown): value is BookingStatus {
+  return typeof value === 'string' && (BOOKING_STATUSES as readonly string[]).includes(value)
+}
 
 function tableOf(id: string): Table | undefined {
   return tables.find((t) => t.id === id)
