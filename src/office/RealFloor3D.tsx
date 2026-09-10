@@ -57,24 +57,12 @@ type Dept = {
   tasks: Task[];
 };
 
+/* Booking is deliberately not a plate. It is one function, a runsheet and a
+   floor plan, not a department, so it lives as a view inside Admin's page
+   alongside enquiries and calls — its desks, systems and work are folded
+   into the Admin entry below. See the design doc, Section 1 and the office
+   entry in Section 10. */
 const DEPTS: Dept[] = [
-  {
-    id: "bookings", n: "006", name: "Bookings", u: 8.0, v: 8.0, size: 3.7, own: true, hue: 18,
-    desks: [{ label: "Enquiries", own: true }, { label: "Waitlist", own: true }, { label: "Functions", own: true }, { label: "Table plan", own: true }, { label: "Deposits", own: true }, { label: "Guest book", own: true }],
-    stack: [{ label: "Peregrine native", own: true }],
-    metrics: [["Covers tonight", "86 / 80"], ["Enquiries handled", "6"]],
-    tasks: [
-      { id: "b1", state: "needs", time: "06:04", system: "Functions", agent: "Ruby", text: "Function quote, 18 guests, Saturday lunch",
-        trail: ["22:14 · Enquiry arrived through the website form", "05:58 · Quote drafted from your function menu at $61 a head", "06:04 · Waiting for you. It goes out in your name."],
-        approveLabel: "Approve and send", doneText: "Function quote sent, 18 guests, Saturday lunch", doneTime: "06:41" },
-      { id: "b2", state: "watching", time: "06:00", system: "Waitlist", agent: "Felix", text: "Saturday sits at 84 of 96 covers, waitlist is on" },
-      { id: "b3", state: "done", time: "05:46", system: "Enquiries", agent: "Ruby", text: "Eleven enquiries answered overnight" },
-      { id: "b4", state: "done", time: "05:33", system: "Table plan", agent: "Felix", text: "Table plan redrawn for the 6pm turn" },
-      { id: "b5", state: "done", time: "05:20", system: "Deposits", agent: "Ruby", text: "Two Friday no-shows charged their $20 deposit, per the policy you set" },
-      { id: "b6", state: "done", time: "05:24", system: "Deposits", agent: "Ruby", text: "Deposits held for Saturday, $540 across 27 bookings" },
-      { id: "b7", state: "watching", time: "05:40", system: "Guest book", agent: "Nadia", text: "Forty-one first-timers this month, six already back a second time" },
-    ],
-  },
   {
     id: "suppliers", n: "001", name: "Suppliers & stock", u: 9.75, v: -0.75, size: 3.7, hue: 152,
     desks: [{ label: "Ordermentum" }, { label: "Fresho" }, { label: "Par levels" }],
@@ -104,10 +92,27 @@ const DEPTS: Dept[] = [
   },
   {
     id: "admin", n: "004", name: "Admin", u: -9.0, v: -9.0, size: 3.7, hue: 262,
-    desks: [{ label: "Website", own: true }, { label: "Email" }, { label: "Phone", own: true }],
-    stack: [{ label: "Website", own: true }, { label: "Phone line", own: true }, { label: "Gmail" }, { label: "Google Business" }],
-    metrics: [["Calls answered", "4"], ["Listing", "Current"]],
+    desks: [
+      { label: "Website", own: true }, { label: "Email" }, { label: "Phone", own: true },
+      /* folded in from Booking */
+      { label: "Enquiries", own: true }, { label: "Waitlist", own: true }, { label: "Functions", own: true },
+      { label: "Table plan", own: true }, { label: "Deposits", own: true }, { label: "Guest book", own: true },
+    ],
+    stack: [{ label: "Website", own: true }, { label: "Phone line", own: true }, { label: "Gmail" }, { label: "Google Business" }, { label: "Peregrine native", own: true }],
+    /* Three numbers, not four: the card answers "is this fine", not "here is
+       everything" (design doc, office entry). Booking's covers count earns a
+       slot; its enquiries count is already carried by "Calls answered". */
+    metrics: [["Covers tonight", "86 / 80"], ["Calls answered", "4"], ["Listing", "Current"]],
     tasks: [
+      { id: "b1", state: "needs", time: "06:04", system: "Functions", agent: "Ruby", text: "Function quote, 18 guests, Saturday lunch",
+        trail: ["22:14 · Enquiry arrived through the website form", "05:58 · Quote drafted from your function menu at $61 a head", "06:04 · Waiting for you. It goes out in your name."],
+        approveLabel: "Approve and send", doneText: "Function quote sent, 18 guests, Saturday lunch", doneTime: "06:41" },
+      { id: "b2", state: "watching", time: "06:00", system: "Waitlist", agent: "Felix", text: "Saturday sits at 84 of 96 covers, waitlist is on" },
+      { id: "b3", state: "done", time: "05:46", system: "Enquiries", agent: "Ruby", text: "Eleven enquiries answered overnight" },
+      { id: "b4", state: "done", time: "05:33", system: "Table plan", agent: "Felix", text: "Table plan redrawn for the 6pm turn" },
+      { id: "b5", state: "done", time: "05:20", system: "Deposits", agent: "Ruby", text: "Two Friday no-shows charged their $20 deposit, per the policy you set" },
+      { id: "b6", state: "done", time: "05:24", system: "Deposits", agent: "Ruby", text: "Deposits held for Saturday, $540 across 27 bookings" },
+      { id: "b7", state: "watching", time: "05:40", system: "Guest book", agent: "Nadia", text: "Forty-one first-timers this month, six already back a second time" },
       { id: "a1", state: "watching", time: "05:58", system: "Phone", agent: "Willa", text: "A supplier voicemail from 21:40, transcribed and filed" },
       { id: "a2", state: "done", time: "05:10", system: "Phone", agent: "Oscar", text: "Four calls answered after close, three became bookings, straight into the book" },
       { id: "a3", state: "done", time: "05:15", system: "Website", agent: "Willa", text: "Menu prices updated from Tuesday's supplier change" },
@@ -633,13 +638,6 @@ function DeptFeature({
           <PaintSplat position={[position[0] - 0.5, 0, position[2] - 0.05]} color="#9A7B3F" r={0.045} />
         </group>
       );
-    case "bookings":
-      return (
-        <group>
-          <AdminDesk position={position} rotation={rotation} />
-          <DroppedPapers position={[position[0] - Math.cos(rotation) * 0.1, position[1], position[2] - Math.sin(rotation) * 0.1 - 0.5]} />
-        </group>
-      );
     case "suppliers":
       return (
         <group>
@@ -658,10 +656,15 @@ function DeptFeature({
         </group>
       );
     case "admin":
+      /* Printer and folders, plus the booking desk that came across with the
+         merge — offset along the feature axis so the two prop sets sit side
+         by side rather than intersecting. */
       return (
         <group>
           <Printer position={position} rotation={rotation} />
           <FolderStack position={[position[0] - Math.sin(rotation) * 0.34, position[1], position[2] + Math.cos(rotation) * 0.34]} rotation={rotation} />
+          <AdminDesk position={[position[0] + Math.sin(rotation) * 1.15, position[1], position[2] - Math.cos(rotation) * 1.15]} rotation={rotation} />
+          <DroppedPapers position={[position[0] + Math.sin(rotation) * 1.15 - Math.cos(rotation) * 0.1, position[1], position[2] - Math.cos(rotation) * 1.15 - Math.sin(rotation) * 0.1 - 0.5]} />
         </group>
       );
     case "roster":

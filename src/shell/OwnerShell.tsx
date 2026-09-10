@@ -44,6 +44,8 @@ type View =
   | { kind: 'contact' }
 
 const DEPT_COPY: Record<PlatformId, { title: string; blurb: string }> = {
+  /* No plate of its own any more — booking is a view inside Admin below.
+     The key stays because PlatformId still declares it for AgentOffice. */
   bookings: { title: 'Bookings', blurb: '' },
   finance: { title: 'Finance', blurb: 'Takings, reconciliation, GST set aside, BAS.' },
   suppliers: { title: 'Suppliers & stock', blurb: 'Ordering, price watch, and what runs out next.' },
@@ -69,11 +71,11 @@ export default function OwnerShell() {
   }, [])
 
   const openDept = useCallback((id: PlatformId) => setView({ kind: 'dept', id }), [])
-  const openRunSheet = useCallback(() => setView({ kind: 'dept', id: 'bookings' }), [])
+  const openRunSheet = useCallback(() => setView({ kind: 'dept', id: 'admin' }), [])
 
   /* Opening the runsheet is what "reading" a booking means, however you got
      there — the office platform or the notification itself. */
-  const onRunSheet = view?.kind === 'dept' && view.id === 'bookings'
+  const onRunSheet = view?.kind === 'dept' && view.id === 'admin'
   useEffect(() => {
     if (onRunSheet) markSeen()
   }, [onRunSheet, markSeen])
@@ -83,7 +85,7 @@ export default function OwnerShell() {
     switch (view.kind) {
       case 'dept':
         return {
-          eyebrow: view.id === 'bookings' ? 'Today · The Peacock' : 'Department',
+          eyebrow: view.id === 'admin' ? 'Today · The Peacock' : 'Department',
           title: DEPT_COPY[view.id].title,
         }
       case 'revenue':
@@ -107,8 +109,13 @@ export default function OwnerShell() {
     if (!view) return null
     switch (view.kind) {
       case 'dept':
-        return view.id === 'bookings' ? (
-          <RunSheet bookings={bookings} covers={covers} loading={loading} error={error} />
+        /* Admin carries the runsheet as one view on its page, under its own
+           blurb — booking is a function inside Admin, not a department. */
+        return view.id === 'admin' ? (
+          <>
+            <p className="pg__lede">{DEPT_COPY.admin.blurb}</p>
+            <RunSheet bookings={bookings} covers={covers} loading={loading} error={error} />
+          </>
         ) : (
           <p className="pg__lede">{DEPT_COPY[view.id].blurb}</p>
         )
@@ -186,7 +193,7 @@ export default function OwnerShell() {
               onOpenBrain={() => setBrainOpen(true)}
               onOpenDepartment={(id) => openDept(id as PlatformId)}
               onEnterVenue={() => setView({ kind: 'room' })}
-              waitingByDept={{ bookings: unseen }}
+              waitingByDept={{ admin: unseen }}
               resetFocus={resetFocus}
             />
           </div>
