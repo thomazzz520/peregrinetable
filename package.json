@@ -23,6 +23,7 @@
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2",
     "three": "0.185.1",
+    "troika-three-text": "^0.52.4",
     "framer-motion": "^11.11.9"
   },
   "devDependencies": {

@@ -1,4 +1,6 @@
 import React, {
+  useSyncExternalStore,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -7,11 +9,14 @@ import React, {
 } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { OrbitControls, ContactShadows, Html } from "@react-three/drei";
-import { motion, useSpring, useTransform } from "framer-motion";
+import { OrbitControls, ContactShadows, Html, Text, Billboard } from "@react-three/drei";
 import FirstPaint from "../three/FirstPaint";
+import ContextRecovery from "../three/ContextRecovery";
 import { domain } from "../theme/tokens";
 import type { PlatformId } from "./departments";
+import { preloadFont } from "troika-three-text";
+import { FontLoader, type Font } from "three/examples/jsm/loaders/FontLoader.js";
+import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
 
 /**
  * RealFloor3D — the same layout, positions, hues and task data as
@@ -52,7 +57,6 @@ type Dept = {
   u: number;
   v: number;
   size: number;
-  own?: boolean;
   /** Which locked department tone this plate wears (design doc §2). The
    *  colour itself lives in tokens.ts — never a literal here. */
   tone: keyof typeof domain;
@@ -153,8 +157,6 @@ const DEPTS: Dept[] = [
   },
 ];
 
-const ALL_TASKS = DEPTS.flatMap((d) => d.tasks);
-
 /** Which department owns a given task, so the overview list (which has no
  *  department context of its own) can still show its colour and number. */
 const TASK_DEPT = new Map<string, Dept>();
@@ -206,6 +208,70 @@ function hash(str: string) {
 const rand = (seed: string) => hash(seed);
 
 /* ------------------------------------------------------------------ */
+/* Flat labels                                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Every flat label in the scene: desk names, roster names, the rooftop
+ * sign. Printed matter, so flat — relief is reserved for the ground plane
+ * (design doc §2).
+ *
+ * These were DOM overlays, which meant rasterised HTML stretched by a CSS
+ * transform: soft and low-quality at close zoom, and worse the further in
+ * you went. As troika text they are real scene geometry and stay sharp at
+ * any distance.
+ *
+ * `fallback` is the overlay they replaced. It is not dead code — troika
+ * cannot read a woff2, and the day someone swaps the font back this is
+ * what keeps the words on screen instead of losing them silently.
+ */
+function FlatLabel({
+  children, position, rotation, size, color, letterSpacing = 0.05,
+  billboard = false, anchorX = "center", fallback, maxWidth,
+}: {
+  children: string;
+  position: [number, number, number];
+  rotation?: [number, number, number];
+  size: number;
+  color: string;
+  letterSpacing?: number;
+  billboard?: boolean;
+  anchorX?: "center" | "left" | "right";
+  fallback: React.ReactNode;
+  maxWidth?: number;
+}) {
+  const font = useSceneFont();
+  if (font === "failed") return <>{fallback}</>;
+  if (font === "loading") return null;
+
+  const text = (
+    <Text
+      font={SCENE_FONT}
+      fontSize={size}
+      maxWidth={maxWidth}
+      letterSpacing={letterSpacing}
+      color={color}
+      anchorX={anchorX}
+      anchorY="middle"
+      position={billboard ? undefined : position}
+      rotation={billboard ? undefined : rotation}
+    >
+      {children}
+    </Text>
+  );
+
+  /* drei's Text suspends internally while troika parses the font. The gate
+     above means it is already cached and resolves in the same tick, but the
+     boundary is here so that if it ever does not, one label waits a frame
+     rather than the whole Canvas dropping to "PREPARING OFFICE". */
+  return (
+    <Suspense fallback={null}>
+      {billboard ? <Billboard position={position}>{text}</Billboard> : text}
+    </Suspense>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Shape kit                                                          */
 /* ------------------------------------------------------------------ */
 
@@ -251,10 +317,22 @@ function Desk({ position, rotation, label }: { position: [number, number, number
         <meshStandardMaterial color="#26332C" roughness={1} flatShading />
       </mesh>
       <Worker seed={label} position={[0, 0, -0.55]} />
-      <Html position={[0, 0, 0.42]} center zIndexRange={[3, 0]} distanceFactor={9}>
-        <div style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 8, letterSpacing: "0.05em",
-          color: "#6C7466", whiteSpace: "nowrap", pointerEvents: "none" }}>{label}</div>
-      </Html>
+      {/* 0.09 world units matches what the 8px overlay measured at the
+          default camera; it now holds that crispness at any zoom. */}
+      <FlatLabel
+        position={[0, 0, 0.42]}
+        size={0.09}
+        color="#6C7466"
+        billboard
+        fallback={
+          <Html position={[0, 0, 0.42]} center zIndexRange={[3, 0]} distanceFactor={9}>
+            <div style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 8, letterSpacing: "0.05em",
+              color: "#6C7466", whiteSpace: "nowrap", pointerEvents: "none" }}>{label}</div>
+          </Html>
+        }
+      >
+        {label}
+      </FlatLabel>
     </group>
   );
 }
@@ -340,15 +418,16 @@ function Plant({ position }: { position: [number, number, number] }) {
 /* not the same desk cluster six times over.                          */
 /* ------------------------------------------------------------------ */
 
-/** A board on two legs, with real HTML content on its face (a chart, a
- *  roster grid, a poster) — the content always faces the camera, same as
- *  every other label in the scene, so it stays legible from any angle. */
-function SignBoard({
-  position, rotation = 0, w = 0.5, h = 0.36, boardColor = "#FFFFFF", children,
-}: { position: [number, number, number]; rotation?: number; w?: number; h?: number; boardColor?: string; children: React.ReactNode }) {
+type BoardProps = {
+  position: [number, number, number]; rotation?: number;
+  w?: number; h?: number; boardColor?: string; children: React.ReactNode;
+};
+
+/** Two legs and a board face — shared by both wrappers below. */
+function BoardFrame({ w, h, boardColor }: { w: number; h: number; boardColor: string }) {
   const legH = h + 0.22;
   return (
-    <group position={position} rotation={[0, rotation, 0]}>
+    <>
       {[-w * 0.36, w * 0.36].map((x, i) => (
         <mesh key={i} castShadow position={[x, legH / 2, 0]}>
           <cylinderGeometry args={[0.014, 0.014, legH, 6]} />
@@ -359,6 +438,18 @@ function SignBoard({
         <boxGeometry args={[w, h, 0.02]} />
         <meshStandardMaterial color={boardColor} roughness={0.92} flatShading />
       </mesh>
+    </>
+  );
+}
+
+/** A board whose content is a DOM overlay, billboarded to the camera. Still
+ *  the right answer for the pie chart: that is an SVG, and troika draws
+ *  text, not arcs. */
+function SignBoard({ position, rotation = 0, w = 0.5, h = 0.36, boardColor = "#FFFFFF", children }: BoardProps) {
+  const legH = h + 0.22;
+  return (
+    <group position={position} rotation={[0, rotation, 0]}>
+      <BoardFrame w={w} h={h} boardColor={boardColor} />
       <Html position={[0, legH - h / 2 + 0.05, 0.03]} center zIndexRange={[3, 0]} distanceFactor={8}>
         {children}
       </Html>
@@ -366,9 +457,16 @@ function SignBoard({
   );
 }
 
-const boardText: React.CSSProperties = {
-  fontFamily: "Inter, sans-serif", fontSize: 11, color: "#2B2E28", pointerEvents: "none", userSelect: "none",
-};
+/** A board whose content is real geometry sitting on the face, so it turns
+ *  with the board instead of swivelling to the camera. */
+function SignBoardFace({ position, rotation = 0, w = 0.5, h = 0.36, boardColor = "#FFFFFF", children }: BoardProps) {
+  return (
+    <group position={position} rotation={[0, rotation, 0]}>
+      <BoardFrame w={w} h={h} boardColor={boardColor} />
+      {children}
+    </group>
+  );
+}
 
 /** Marketing — a framed poster on an easel, one colour block of "artwork". */
 function Poster({ position, rotation = 0, colors }: { position: [number, number, number]; rotation?: number; colors: [string, string, string] }) {
@@ -623,17 +721,67 @@ function RosterBoard({ position, rotation = 0 }: { position: [number, number, nu
   const rows = [
     ["Maya", "#4FAE90"], ["Tom", "#C15A3E"], ["Priya", "#9A7B3F"], ["Sam", "#80D0B8"],
   ] as const;
+  const font = useSceneFont();
+
+  /* Whole-board fallback rather than per-name: the names are laid out
+     against the board face here, so losing the font has to give back the
+     overlay version intact rather than four gaps where the names were. */
+  if (font !== "ready") {
+    if (font === "loading") return <SignBoardFace position={position} rotation={rotation} w={0.56} h={0.4}>{null}</SignBoardFace>;
+    return (
+      <SignBoard position={position} rotation={rotation} w={0.56} h={0.4}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, width: 92 }}>
+          {rows.map(([name, c]) => (
+            <div key={name} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <div style={{ width: 8, height: 8, borderRadius: 2, background: c, flex: "none" }} />
+              <span style={{ fontFamily: "Inter, sans-serif", fontSize: 9, fontWeight: 600, color: "#2B2E28",
+                pointerEvents: "none", userSelect: "none" }}>{name}</span>
+            </div>
+          ))}
+        </div>
+      </SignBoard>
+    );
+  }
+
+  /* Printed on the board's face rather than floated in front of it: these
+     are names written on a whiteboard, so they sit on the board and turn
+     with it. The swatches become real geometry for the same reason. */
+  const faceY = 0.4 + 0.22 - 0.4 / 2 + 0.05;
   return (
-    <SignBoard position={position} rotation={rotation} w={0.56} h={0.4}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 4, width: 92 }}>
-        {rows.map(([name, c]) => (
-          <div key={name} style={{ display: "flex", alignItems: "center", gap: 5 }}>
-            <div style={{ width: 8, height: 8, borderRadius: 2, background: c, flex: "none" }} />
-            <span style={{ ...boardText, fontSize: 9, fontWeight: 600 }}>{name}</span>
-          </div>
-        ))}
-      </div>
-    </SignBoard>
+    <SignBoardFace position={position} rotation={rotation} w={0.56} h={0.4}>
+      {rows.map(([name, c], i) => {
+        const y = faceY + 0.105 - i * 0.07;
+        return (
+          <group key={name}>
+            <mesh position={[-0.17, y, 0.015]}>
+              <planeGeometry args={[0.032, 0.032]} />
+              <meshBasicMaterial color={c} />
+            </mesh>
+            {/* Its own boundary, exactly as FlatLabel has. drei's Text
+                suspends internally whenever troika re-parses the font, and
+                without a boundary here that suspension escapes the Canvas
+                to the <Suspense fallback={<Loading />}> wrapping it. React
+                hides a re-suspended subtree with display:none rather than
+                unmounting it, so the canvas collapsed to 0x0 and the
+                drawing buffer was reallocated to zero and back — which is
+                what was killing the WebGL context and blanking the scene. */}
+            <Suspense fallback={null}>
+              <Text
+                font={SCENE_FONT}
+                fontSize={0.05}
+                letterSpacing={0.02}
+                color="#2B2E28"
+                anchorX="left"
+                anchorY="middle"
+                position={[-0.14, y, 0.015]}
+              >
+                {name}
+              </Text>
+            </Suspense>
+          </group>
+        );
+      })}
+    </SignBoardFace>
   );
 }
 
@@ -694,6 +842,245 @@ function DeptFeature({
 }
 
 /* ------------------------------------------------------------------ */
+/* Plate label                                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The font the 3D labels are drawn from — deliberately the .woff, not the
+ * .woff2 the stylesheet uses.
+ *
+ * Troika parses raw sfnt and woff1 only; on a woff2 it throws "woff2 fonts
+ * not supported". That is worth spelling out because of how it fails: drei's
+ * Text suspends on `new Promise(res => preloadFont(args, res))`, a promise
+ * with no reject path, so a font troika cannot read never settles. The label
+ * suspends for ever and renders nothing, with no error in the console. Both
+ * files are the same Jost subset; the woff2 stays for @font-face, since the
+ * browser prefers it and it is 6 KB smaller.
+ */
+const SCENE_FONT = "/fonts/jost-latin.woff";
+/** Long enough for a cold cache on a slow connection, short enough that a
+ *  broken font shows as a fallback rather than an empty plate. */
+const FONT_TIMEOUT_MS = 6000;
+
+type FontState = "loading" | "ready" | "failed";
+
+/* One load for the whole scene, shared by every label, in a tiny store so
+   the labels can re-render when it settles. */
+let fontState: FontState = "loading";
+const fontListeners = new Set<() => void>();
+let fontStarted = false;
+
+function startFontLoad() {
+  if (fontStarted) return;
+  fontStarted = true;
+  let settled = false;
+  const settle = (next: FontState) => {
+    if (settled) return;
+    settled = true;
+    fontState = next;
+    fontListeners.forEach((l) => l());
+  };
+  /* The timeout is the whole point: without it a font troika cannot parse is
+     indistinguishable from one still loading, for ever and in silence. */
+  const timer = setTimeout(() => {
+    console.warn(
+      `[office] ${SCENE_FONT} did not load within ${FONT_TIMEOUT_MS}ms — ` +
+        "falling back to DOM labels. Troika needs woff1 or ttf, never woff2.",
+    );
+    settle("failed");
+  }, FONT_TIMEOUT_MS);
+  try {
+    preloadFont({ font: SCENE_FONT }, () => {
+      clearTimeout(timer);
+      settle("ready");
+    });
+  } catch (err) {
+    clearTimeout(timer);
+    console.warn(`[office] ${SCENE_FONT} could not be loaded, using DOM labels:`, err);
+    settle("failed");
+  }
+}
+
+function useSceneFont(): FontState {
+  startFontLoad();
+  return useSyncExternalStore(
+    (cb) => {
+      fontListeners.add(cb);
+      return () => fontListeners.delete(cb);
+    },
+    () => fontState,
+    () => fontState,
+  );
+}
+
+/* The carved plate names. Design doc: relief for the ground plane, flat
+   text for printed matter. These are the ground plane. */
+
+/** Extruded from the plate surface, not laid on it. 0.03m of relief on a
+ *  7.4m plate is the proportion of lettering cast into a floor tile. */
+const LABEL_SIZE = 0.62;
+const LABEL_DEPTH = 0.03;
+/** The bevel is what does the work: it gives each stroke a chamfered edge,
+ *  so the directional light catches one side and leaves the other dark.
+ *  Without it the letters are slab-sided and read as flat colour again. */
+const LABEL_BEVEL = 0.004;
+/** Out towards the plate's leading edge, clear of the middle. Figures and
+ *  desks may stand on it — that is what a floor plaque is for. */
+const LABEL_RADIUS = 0.7;
+/** Sunk fractionally so the letters grow out of the cap rather than hover
+ *  over it; the bevel's lower edge disappears into the surface. */
+const LABEL_SINK = 0.004;
+const TYPEFACE_URL = "/fonts/jost-caps.typeface.json";
+const TYPEFACE_TIMEOUT_MS = 6000;
+
+/* Loaded once for the scene. Explicitly, rather than through drei's useFont,
+   because useFont suspends on the same no-reject-path promise that made the
+   woff2 labels vanish in silence — a font it cannot read never settles.
+   Here a failure is a state, and the state has a visible fallback. */
+let typefaceState: FontState = "loading";
+let typeface: Font | null = null;
+const typefaceListeners = new Set<() => void>();
+let typefaceStarted = false;
+
+function startTypefaceLoad() {
+  if (typefaceStarted) return;
+  typefaceStarted = true;
+  let settled = false;
+  const settle = (next: FontState, font: Font | null) => {
+    if (settled) return;
+    settled = true;
+    typefaceState = next;
+    typeface = font;
+    typefaceListeners.forEach((l) => l());
+  };
+  const timer = setTimeout(() => {
+    console.warn(`[office] ${TYPEFACE_URL} did not load within ${TYPEFACE_TIMEOUT_MS}ms — plate names fall back to flat labels.`);
+    settle("failed", null);
+  }, TYPEFACE_TIMEOUT_MS);
+
+  fetch(TYPEFACE_URL)
+    .then((r) => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    })
+    .then((json) => {
+      clearTimeout(timer);
+      settle("ready", new FontLoader().parse(json));
+    })
+    .catch((err) => {
+      clearTimeout(timer);
+      console.warn(`[office] ${TYPEFACE_URL} could not be loaded, plate names fall back to flat labels:`, err);
+      settle("failed", null);
+    });
+}
+
+function useTypeface(): [FontState, Font | null] {
+  startTypefaceLoad();
+  const state = useSyncExternalStore(
+    (cb) => {
+      typefaceListeners.add(cb);
+      return () => typefaceListeners.delete(cb);
+    },
+    () => typefaceState,
+    () => typefaceState,
+  );
+  return [state, typeface];
+}
+
+/**
+ * The department's name, carved into its floor.
+ *
+ * Real extruded geometry, not a decal and not flat text held above the
+ * surface: the letters have side walls, so the scene's own directional
+ * light lights one edge of every stroke and leaves the opposite edge dark,
+ * and they cast a small shadow onto the cap they stand on. At a raking
+ * angle they read as relief, which is the test this is built to pass.
+ *
+ * Fixed to the plate, never billboarded. Carved lettering that rotated to
+ * follow the camera would give the game away the moment the shadow swung
+ * with it — and being fixed is what allows the type to be this large,
+ * since the footprint is a rectangle rather than the disc a spinning label
+ * would sweep.
+ */
+function PlateLabel({ dept, lit }: { dept: Dept; lit: boolean }) {
+  const [state, font] = useTypeface();
+  if (state !== "ready" || !font) {
+    // "loading" shows nothing for a frame or two; "failed" keeps the name.
+    return state === "failed" ? <PlateLabelDom dept={dept} lit={lit} /> : null;
+  }
+  return <PlateLabelCarved dept={dept} lit={lit} font={font} />;
+}
+
+/** The flat fallback, kept so a font problem costs relief, not the name. */
+function PlateLabelDom({ dept, lit }: { dept: Dept; lit: boolean }) {
+  const ang = Math.atan2(dept.v, dept.u);
+  return (
+    <Html
+      position={[Math.cos(ang) * (dept.size + 0.55), 0.05, Math.sin(ang) * (dept.size + 0.55)]}
+      center
+      zIndexRange={[4, 0]}
+      distanceFactor={40}
+    >
+      <div style={{ pointerEvents: "none", userSelect: "none", fontFamily: "IBM Plex Mono, monospace",
+        fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase",
+        color: lit ? "#203048" : "#8B9384", whiteSpace: "nowrap", textAlign: "center" }}>
+        {dept.name}
+      </div>
+    </Html>
+  );
+}
+
+function PlateLabelCarved({ dept, lit, font }: { dept: Dept; lit: boolean; font: Font }) {
+  const ang = Math.atan2(dept.v, dept.u);
+
+  const { geometry, yaw } = useMemo(() => {
+    const geo = new TextGeometry(dept.name.toUpperCase(), {
+      font,
+      size: LABEL_SIZE,
+      depth: LABEL_DEPTH,
+      curveSegments: 4,
+      bevelEnabled: true,
+      bevelThickness: LABEL_BEVEL,
+      bevelSize: LABEL_BEVEL,
+      bevelSegments: 1,
+    });
+    // TextGeometry starts at the origin and runs right; centre it on the
+    // baseline so the plate's midline runs through the middle of the word.
+    geo.computeBoundingBox();
+    const b = geo.boundingBox!;
+    geo.translate(-(b.max.x + b.min.x) / 2, -(b.max.y + b.min.y) / 2, -LABEL_DEPTH / 2);
+    geo.computeVertexNormals();
+
+    /* Point the text's up vector outward, away from the hub. Laid flat by
+       the group's -90 deg about X and turned by -yaw about Z, the text's
+       local +Y lands at (sin yaw, 0, -cos yaw); setting that equal to
+       (cos ang, sin ang) gives the yaw below. The camera orbits well
+       outside the ring, so outward is also towards the reader. */
+    return { geometry: geo, yaw: Math.atan2(Math.cos(ang), -Math.sin(ang)) };
+  }, [dept.name, font, ang]);
+
+  useEffect(() => () => geometry.dispose(), [geometry]);
+
+  return (
+    <group
+      position={[Math.cos(ang) * dept.size * LABEL_RADIUS, -LABEL_SINK, Math.sin(ang) * dept.size * LABEL_RADIUS]}
+      rotation={[-Math.PI / 2, 0, 0]}
+    >
+      <mesh geometry={geometry} rotation={[0, 0, -yaw]} castShadow receiveShadow>
+        {/* Standard, not Basic: the whole point is that it takes the light.
+            flatShading keeps the chamfer reading as facets, like the rest
+            of the scene, rather than a smooth plastic roll-off. */}
+        <meshStandardMaterial
+          color={lit ? "#203048" : "#6E7A6A"}
+          roughness={0.78}
+          flatShading
+        />
+      </mesh>
+    </group>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Island (a department)                                              */
 /* ------------------------------------------------------------------ */
 
@@ -750,26 +1137,9 @@ function Island({
         <Desk key={i} position={d.pos} rotation={d.rot} label={dept.desks[i].label} />
       ))}
 
-      {/* Anchored outward along this plate's own radial axis. The old offset
-          was a fixed world -X vector, identical for all six plates, which is
-          only correct for a plate sitting on the +X axis — it pushed
-          Suppliers' label inward off its plate and over the hub walkway.
-          distanceFactor brings this label in line with the others in this
-          file (9, 8, 6 above): it now scales with the scene instead of
-          holding 10px at every zoom. 40 keeps it at roughly today's size at
-          the default camera. */}
-      <Html
-        position={[Math.cos(ang) * (dept.size + 0.55), 0.05, Math.sin(ang) * (dept.size + 0.55)]}
-        center
-        zIndexRange={[4, 0]}
-        distanceFactor={40}
-      >
-        <div style={{ pointerEvents: "none", userSelect: "none", fontFamily: "IBM Plex Mono, monospace",
-          fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase",
-          color: selected || hovered ? "#203048" : "#8B9384", whiteSpace: "nowrap", textAlign: "center" }}>
-          {dept.name}{dept.own ? " · OURS" : ""}
-        </div>
-      </Html>
+      {/* No boundary needed: PlateLabel loads its typeface through an
+          explicit state machine rather than by suspending. */}
+      <PlateLabel dept={dept} lit={selected || hovered} />
 
       {waiting > 0 ? (
         <Html position={[0, 1.05, -dept.size * 0.3]} center zIndexRange={[6, 0]}>
@@ -911,11 +1281,23 @@ function Hub({ onEnterHouse, onEnterBrain }: { onEnterHouse: (x: number, y: numb
         <boxGeometry args={[0.9, 0.24, 0.1]} />
         <meshStandardMaterial color="#161616" roughness={0.82} flatShading />
       </mesh>
-      <Html position={[0, signH, 0.06]} center zIndexRange={[7, 0]}>
-        <div style={{ pointerEvents: "none", userSelect: "none", fontFamily: "Inter, sans-serif", fontSize: 9,
-          fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#F8F8F3",
-          whiteSpace: "nowrap" }}>Peregrine</div>
-      </Html>
+      {/* On the sign's own face, not billboarded off it — a shop sign
+          does not swivel to follow you. */}
+      <FlatLabel
+        position={[0, signH, 0.056]}
+        size={0.085}
+        letterSpacing={0.14}
+        color="#F8F8F3"
+        fallback={
+          <Html position={[0, signH, 0.06]} center zIndexRange={[7, 0]}>
+            <div style={{ pointerEvents: "none", userSelect: "none", fontFamily: "Inter, sans-serif", fontSize: 9,
+              fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#F8F8F3",
+              whiteSpace: "nowrap" }}>Peregrine</div>
+          </Html>
+        }
+      >
+        PEREGRINE
+      </FlatLabel>
 
       {/* pavement tables, one shaded */}
       <OutdoorTable position={[HOUSE_R + 0.55, 0, -0.5]} parasol />
@@ -1156,238 +1538,16 @@ function Loading() {
 const KEYFRAMES3D = `@keyframes aoSpin3d{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 @keyframes aoDrift3d{0%,100%{transform:translate(0,0)}33%{transform:translate(3px,-2px)}66%{transform:translate(-2px,3px)}}`;
 
-/* ------------------------------------------------------------------ */
-/* Minimal Reveal (same as RealFloor.tsx)                             */
-/* ------------------------------------------------------------------ */
-
-
-/** A headline digit that springs to its new value rather than just
- *  swapping text — the one number on the page worth making feel alive. */
-function AnimatedNumber({ value }: { value: number }) {
-  const spring = useSpring(value, { stiffness: 260, damping: 22 });
-  const rounded = useTransform(spring, (v) => Math.round(v));
-  const [display, setDisplay] = useState(value);
-  useEffect(() => { spring.set(value); }, [value, spring]);
-  useEffect(() => {
-    const unsub = rounded.on("change", (v) => setDisplay(v));
-    return unsub;
-  }, [rounded]);
-  return (
-    <motion.span
-      key={value}
-      initial={{ scale: 1.35, opacity: 0.4 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 400, damping: 18 }}
-      style={{ display: "inline-block", fontVariantNumeric: "tabular-nums" }}
-    >
-      {display}
-    </motion.span>
-  );
-}
-
-function TaskRow({ task, state, dept, onApprove }: { task: Task; state: TaskState; dept: Dept; onApprove: (id: string) => void }) {
-  if (!dept) return null;
-  const done = state === "done" && task.state === "needs";
-  const text = done ? task.doneText ?? task.text : task.text;
-  const time = done ? task.doneTime ?? task.time : task.time;
-  const hue = toneHue(dept);
-  const wash = `hsl(${hue}, 55%, 97%)`;
-  const border = `hsl(${hue}, 45%, 89%)`;
-  const deptInk = `hsl(${hue}, 55%, 38%)`;
-  // The agent's own voice for the body — a request when it's waiting on you,
-  // a plain report otherwise (the text already reads as one). Who's talking
-  // is carried by the avatar header now, so it doesn't need repeating here.
-  const body = state === "needs" && !done ? `I need your help on ${text}` : text;
-  return (
-    <li
-      className="floor__task"
-      data-state={state}
-      data-cleared={done || undefined}
-      style={{
-        display: "flex", flexDirection: "column", gap: 8,
-        background: wash, border: `1px solid ${border}`, borderRadius: 14,
-        padding: "13px 15px", listStyle: "none",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-        <div
-          aria-hidden
-          style={{
-            flex: "none", width: 32, height: 32, borderRadius: "50%",
-            background: `linear-gradient(150deg, hsl(${hue},68%,60%), hsl(${hue},62%,42%))`,
-            border: "2px solid #fff", boxShadow: "0 2px 6px rgba(20,20,20,0.16)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            color: "#fff", fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: 13,
-          }}
-        >
-          {task.agent[0]}
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.2, minWidth: 0 }}>
-          <span style={{ fontWeight: 700, fontSize: 13.5, color: "#1a1a1a" }}>{task.agent}</span>
-          <span style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 9.5, letterSpacing: "0.05em",
-            textTransform: "uppercase", color: deptInk }}>{dept.name}</span>
-        </div>
-        <span
-          aria-hidden
-          style={{
-            marginLeft: "auto", flex: "none", fontFamily: "IBM Plex Mono, monospace", fontSize: 10,
-            fontWeight: 700, color: deptInk, background: "#fff", border: `1px solid ${border}`,
-            borderRadius: 999, padding: "2px 8px",
-          }}
-        >
-          {dept.n}
-        </span>
-      </div>
-      <div className="floor__task-main" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <p className="floor__task-text" style={{ margin: 0 }}>{body}</p>
-        <p className="floor__task-meta" style={{ margin: 0 }}>
-          <span>{time}</span><span aria-hidden> · </span><span>{task.system}</span>
-          {done ? (<><span aria-hidden> · </span><span>Approved by you</span></>) : null}
-        </p>
-        {state === "needs" && task.trail ? (
-          <>
-            <ol className="floor__trail">{task.trail.map((t) => <li key={t}>{t}</li>)}</ol>
-            <button type="button" className="floor__approve" onClick={() => onApprove(task.id)}>{task.approveLabel ?? "Approve"}</button>
-          </>
-        ) : null}
-      </div>
-    </li>
-  );
-}
-
-function StackRow({ dept }: { dept: Dept }) {
-  return (
-    <div className="floor__stackrow">
-      <span className="floor__stackrow-label">{dept.own ? "Runs on" : "Works with"}</span>
-      <span className="floor__stackrow-chips">
-        {dept.stack.map((s) => (
-          <span key={s.label} className="floor__syschip" data-own={s.own || undefined}>
-            <span className="floor__syschip-tile" aria-hidden>{s.label[0]}</span>{s.label}
-          </span>
-        ))}
-      </span>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Top level                                                          */
-/* ------------------------------------------------------------------ */
-
-export default function RealFloor3D() {
-  const [selected, setSelected] = useState<PlatformId | null>(null);
-  const [states, setStates] = useState<Record<string, TaskState>>(() =>
-    Object.fromEntries(ALL_TASKS.map((t) => [t.id, t.state])));
-  const panelRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    if (document.getElementById("real-floor-3d-keyframes")) return;
-    const st = document.createElement("style");
-    st.id = "real-floor-3d-keyframes";
-    st.textContent = KEYFRAMES3D;
-    document.head.appendChild(st);
-  }, []);
-
-  const needsCount = ALL_TASKS.filter((t) => states[t.id] === "needs").length;
-
-  const waitingByDept = useMemo(
-    () => Object.fromEntries(DEPTS.map((d) => [d.id, d.tasks.filter((t) => states[t.id] === "needs").length])) as Partial<Record<PlatformId, number>>,
-    [states],
-  );
-
-  function select(id: PlatformId | "") {
-    setSelected(id || null);
-  }
-  function approve(id: string) {
-    const task = ALL_TASKS.find((t) => t.id === id);
-    if (!task) return;
-    setStates((s) => ({ ...s, [id]: "done" }));
-  }
-
-  const dept = DEPTS.find((d) => d.id === selected) ?? null;
-
-  return (
-    <section className="floor">
-      <div className="floor__stage">
-        <div className="floor__scene" data-zoomed={selected ? "" : undefined}>
-          <div style={{ position: "relative", width: "100%", aspectRatio: "1490 / 1064", background: "#F0F0F0", borderRadius: 12, overflow: "hidden" }}>
-            <Suspense fallback={<Loading />}>
-              <Canvas
-                dpr={[1, 3]}
-                shadows="soft"
-                gl={{ antialias: true, preserveDrawingBuffer: true }}
-                camera={{ position: [54, 45, 34], fov: 28, near: 1, far: 200 }}
-                onCreated={({ gl, scene }) => {
-                  gl.shadowMap.type = THREE.PCFSoftShadowMap;
-                  gl.toneMapping = THREE.NoToneMapping;
-                  scene.background = new THREE.Color(C.paper);
-                }}
-              >
-                <Scene
-                  waitingByDept={waitingByDept}
-                  selected={selected}
-                  onSelectIsland={select}
-                  onEnterHouse={(x, y) => window.dispatchEvent(new CustomEvent("agentoffice-house", { detail: { x, y } }))}
-                  onEnterBrain={() => window.dispatchEvent(new CustomEvent("agentoffice-hub"))}
-                />
-              </Canvas>
-            </Suspense>
-          </div>
-        </div>
-
-        <aside ref={panelRef} className="floor__panel" data-dept={dept?.id}>
-          <p className="floor__panel-headline" data-clear={needsCount === 0 || undefined}>
-            {needsCount === 0 ? (
-              "Nothing needs you. Go open."
-            ) : (
-              <><AnimatedNumber value={needsCount} /> {needsCount === 1 ? "thing needs" : "things need"} you.</>
-            )}
-          </p>
-
-          {dept ? (
-            <>
-              <div className="floor__panel-head">
-                <p className="floor__panel-dept">
-                  <span className="floor__panel-n">{dept.n}</span>
-                  <span className="floor__panel-sep" aria-hidden> · </span>
-                  {dept.name.toUpperCase()}
-                </p>
-                <button type="button" className="floor__panel-back" onClick={() => select("")}>All departments</button>
-              </div>
-              <StackRow dept={dept} />
-              <ul className="floor__tasks">
-                {[...dept.tasks]
-                  .sort((a, b) => ["needs", "watching", "done"].indexOf(states[a.id]) - ["needs", "watching", "done"].indexOf(states[b.id]))
-                  .map((t) => <TaskRow key={t.id} task={t} state={states[t.id]} dept={dept} onApprove={approve} />)}
-              </ul>
-            </>
-          ) : (
-            <ul className="floor__tasks">
-              {ALL_TASKS.filter((t) => states[t.id] === "needs").map((t) => (
-                <TaskRow key={t.id} task={t} state="needs" dept={TASK_DEPT.get(t.id)!} onApprove={approve} />
-              ))}
-              {needsCount === 0 ? (
-                <li className="floor__task-empty">Both cleared. The order is with Ordermentum and the quote is in their inbox, and both are on the log with what they cost.</li>
-              ) : null}
-            </ul>
-          )}
-
-          <p className="floor__panel-note">Drag to look around, scroll to zoom, click an island for its desks.</p>
-        </aside>
-      </div>
-    </section>
-  );
-}
-
 
 /* ------------------------------------------------------------------ *
  * The scene on its own.
  *
- * RealFloor3D above is the whole standalone page: the canvas plus a side
- * panel carrying its own ~270 CSS rules. Inside the app shell that panel
- * already exists (src/dashboard/TaskPanel), so this exports just the room
- * — the coloured department islands, the house and the brain — and takes
- * callbacks rather than firing CustomEvents into the void.
+ * This file also exported a RealFloor3D standalone page — the same canvas
+ * plus a side panel carrying its own ~270 CSS rules. Nothing ever mounted
+ * it: inside the app shell that panel already exists as
+ * src/dashboard/TaskPanel, so it has been deleted. What is left is just
+ * the room — the coloured department islands, the house and the brain —
+ * taking callbacks rather than firing CustomEvents into the void.
  * ------------------------------------------------------------------ */
 
 export function RealFloorScene({
@@ -1404,6 +1564,12 @@ export function RealFloorScene({
   resetFocus?: number;
 }) {
   const [selected, setSelected] = useState<PlatformId | null>(null);
+
+  /* Bumped when a lost WebGL context has not come back on its own. Changing
+     the Canvas key tears the dead context down and builds a new one, which is
+     the only route back once the browser has declined to restore. */
+  const [glGeneration, setGlGeneration] = useState(0);
+  const remountGl = useCallback(() => setGlGeneration((n) => n + 1), []);
 
   useEffect(() => {
     if (document.getElementById("real-floor-3d-keyframes")) return;
@@ -1430,6 +1596,7 @@ export function RealFloorScene({
     <div style={{ position: "relative", width: "100%", height: "100%", background: C.paper, overflow: "hidden" }}>
       <Suspense fallback={<Loading />}>
         <Canvas
+          key={glGeneration}
           dpr={[1, 3]}
           shadows="soft"
           gl={{ antialias: true, preserveDrawingBuffer: true }}
@@ -1441,6 +1608,7 @@ export function RealFloorScene({
           }}
         >
           <FirstPaint />
+          <ContextRecovery onGiveUp={remountGl} />
           <Scene
             waitingByDept={waitingByDept}
             selected={selected}
