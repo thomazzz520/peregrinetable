@@ -37,28 +37,36 @@ systems in mind, and `src/data` stays design-system-agnostic by nature.
 - All spatial coordinates in metres, never pixels
 - Data access only through `src/data/` adapters, never direct in components
 
-## Not done yet — phone layout
+## Phone layout
 
-Everything so far is desktop-first. A phone pass is still owed, and these are
-the known blockers rather than a vague "make it responsive":
+The phone pass has landed. It is scoped to one `@media (max-width: 767px)`
+block at the foot of `src/index.css`; nothing above that line changes, which is
+what keeps the computer build exactly as it was.
 
-- `.dock` is `flex: 0 0 328px`. At ~390px wide that leaves ~60px for the scene
-  and breaks the guest flow. It needs to dock to the bottom edge instead — art
-  direction §8 wants panels on one edge and never overlaying the scene, which a
-  bottom sheet satisfies and an overlay does not.
-- The run sheet is an 8-column table; it has to become one card per booking.
-- `.datebar` overflows: a 200px min-width label plus a 168px date input plus
-  buttons. Needs to wrap.
-- `html, body, #root` use `height: 100%`; should be `100dvh` so mobile browser
-  chrome doesn't crop the scene.
-- `fit()` in `src/scene/FloorPlan.tsx` frames the room by the wider projected
-  span, so a portrait phone gets a small room. Probably wants its own fit
-  factor under a breakpoint.
-- There is no touch equivalent for hover (§4's bob) or for wheel zoom, and the
-  canvas sets `touch-action: none`. Tap-to-select already works.
+The layout inverts rather than overlaying. Details go on top, the room sits
+underneath at a fixed height, and the selection menu drops down and pushes the
+room further down the page instead of covering it, so art direction §8's
+"panels on one edge, never over the scene" and "the scene never resizes" both
+still hold. The dock becomes a disclosure with a 48px toggle; the run sheet's
+8-column table becomes one card per booking, each cell carrying its own column
+heading through `td[data-label]::before`; `.datebar` wraps; `html, body, #root`
+run on `100dvh`.
 
-Re-run the §11 checks at phone width when that lands: `window.__auditScene()`
-in dev, plus `npm run check:data`, `check:guest`, `check:tones`.
+The room is sized by its own projected aspect (`--mv-room-aspect`, from the
+same constants `fit()` frames with in `src/scene/layout.ts`) rather than a
+share of the viewport, because the footprint is 1.254:1 and a portrait phone
+would otherwise reserve 41% more height than the room can ever draw into.
+
+Touch: tap selects, one finger scrolls the page past the room, two fingers
+pinch to zoom within the same §1 clamps as the wheel. There is deliberately no
+touch equivalent for §4's hover bob. A tap fires `pointerover` with no matching
+`pointerout`, so the table would stay lifted; `TableMesh` restricts the lift to
+mouse and pen, and selection is what a tap means.
+
+Still owed: the §11 acceptance checks have not been run at phone width.
+`npm run check:data`, `check:guest` and `check:tones` pass, but
+`window.__auditScene()` needs a browser at ~390px and has not been run there
+yet.
 
 ## Running the server API
 
