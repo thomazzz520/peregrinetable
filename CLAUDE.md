@@ -5,14 +5,27 @@ plan, then a time. Owner console manages bookings.
 
 ## Visual work
 
-Full art direction: `.claude/rules/art-direction.md`. Read it before writing
-any component, material, or stylesheet.
+Two design systems, and which applies depends on the surface.
 
-Never, anywhere in this codebase:
+**The booking floor plan** (`src/scene`, `src/components`) is governed by
+`.claude/rules/art-direction.md` — the contained diorama that document was
+written for and whose reference images specify it. Read it before writing any
+component, material, or stylesheet there.
+
+Never, in the booking floor plan:
 - PerspectiveCamera — the scene is orthographic only
 - MeshStandardMaterial / MeshPhysicalMaterial — MeshBasicMaterial only
 - Any light component. The scene has zero lights.
 - box-shadow, backdrop-filter, or border-radius above 3px
+
+**The office scene, owner dashboard, shell and brain** (`src/office`,
+`src/dashboard`, `src/shell`, `src/brain`) run the Peregrine design system in
+`.antigravity.md`, which allows lights, MeshStandardMaterial and a perspective
+camera, and carries its own shadow and corner-radius rules. The prohibitions
+above are not in force there. `.antigravity.md` in turn defers to
+`art-direction.md` as the source of truth for the floor plan's camera,
+materials and palette, so the two documents meet at the same boundary rather
+than overlapping.
 
 ## Conventions
 
