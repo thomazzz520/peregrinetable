@@ -19,69 +19,8 @@ import TableMesh from './TableMesh'
 import { applyQuarterToAll } from './geometry'
 import { auditScene } from './audit'
 import { ROTATE_MS, standardEase } from './ease'
-import {
-  CASE_HEIGHT,
-  CASE_SECTION,
-  CASE_THICK,
-  FOG_FAR,
-  FOG_NEAR,
-  PLATFORM_THICK,
-  ZOOM_MAX,
-  ZOOM_MIN,
-  caseD,
-  caseW,
-} from './layout'
+import { FOG_FAR, FOG_NEAR, ZOOM_MAX, ZOOM_MIN, fit } from './layout'
 import { hex } from './palette'
-
-const SQRT2 = Math.SQRT2
-const SQRT6 = Math.sqrt(6)
-
-/**
- * True isometric projection worked out by hand: a camera at equal XYZ gives
- * 35.264° elevation at 45° azimuth, and these two formulas are where a world
- * point lands on screen under it. Used to frame the room, never to draw.
- */
-function project(x: number, y: number, z: number) {
-  return { sx: (x - z) / SQRT2, su: (2 * y - x - z) / SQRT6 }
-}
-
-/**
- * Zoom that frames the whole case with generous margins, and the target height
- * that centres it. Computed across both footprint orientations so the framing
- * never jumps as the room turns.
- */
-function fit(width: number, height: number) {
-  const yLo = -(PLATFORM_THICK + CASE_THICK)
-  const yHi = CASE_HEIGHT - PLATFORM_THICK + CASE_SECTION
-  let minSx = Infinity
-  let maxSx = -Infinity
-  let minSu = Infinity
-  let maxSu = -Infinity
-
-  for (const [ex, ez] of [
-    [caseW / 2, caseD / 2],
-    [caseD / 2, caseW / 2],
-  ]) {
-    for (const x of [-ex, ex]) {
-      for (const z of [-ez, ez]) {
-        for (const y of [yLo, yHi]) {
-          const { sx, su } = project(x, y, z)
-          minSx = Math.min(minSx, sx)
-          maxSx = Math.max(maxSx, sx)
-          minSu = Math.min(minSu, su)
-          maxSu = Math.max(maxSu, su)
-        }
-      }
-    }
-  }
-
-  const spanX = maxSx - minSx
-  const spanU = maxSu - minSu
-  // Reference 2 is the composition brief: the object takes a small fraction of
-  // the frame and the empty space does the work.
-  const base = Math.min(width / spanX, height / spanU) * 0.92
-  return { base, targetY: (((maxSu + minSu) / 2) * SQRT6) / 2 }
-}
 
 /**
  * Measures the element R3F sizes its canvas to. R3F's own `size` can be a stale
@@ -290,32 +229,104 @@ export default function FloorPlan({
 
   useCanvasMeasureFix(wrapper)
 
-  const onWheel = useCallback((e: React.WheelEvent) => {
-    setZoomMul((z) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z * (e.deltaY > 0 ? 0.92 : 1.087))))
+  /* The canvas keeps touch-action: pan-y so one finger still scrolls the page
+     past the room. Two fingers mean the pinch below, and the page must hold
+     still under it, which only a non-passive listener can say. React's onTouch*
+     are passive, so this one is attached by hand. */
+  useEffect(() => {
+    const el = wrapper.current
+    if (!el) return
+    const holdStill = (e: TouchEvent) => {
+      if (e.touches.length >= 2 && e.cancelable) e.preventDefault()
+    }
+    el.addEventListener('touchmove', holdStill, { passive: false })
+    return () => el.removeEventListener('touchmove', holdStill)
   }, [])
+
+  const clampZoom = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z))
+
+  const onWheel = useCallback((e: React.WheelEvent) => {
+    setZoomMul((z) => clampZoom(z * (e.deltaY > 0 ? 0.92 : 1.087)))
+  }, [])
+
+  /* Pinch is the wheel's touch equivalent, and deliberately nothing more: the
+     same zoomMul, the same §1 clamps, no panning and no tilt. Two fingers,
+     because one finger already means scroll the page in the guest's view and
+     spin the room in the owner's. */
+  const touches = useRef(new Map<number, { x: number; y: number }>())
+  const pinch = useRef<{ dist: number; zoom: number } | null>(null)
+
+  const spread = () => {
+    const [a, b] = [...touches.current.values()]
+    return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0
+  }
+
+  const pinchDown = (e: React.PointerEvent) => {
+    if (e.pointerType !== 'touch') return
+    touches.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (touches.current.size === 2) {
+      pinch.current = { dist: spread(), zoom: zoomMul }
+      // The second finger ends any spin the first one started.
+      drag.current.on = false
+    }
+  }
+
+  const pinchMove = (e: React.PointerEvent) => {
+    if (e.pointerType !== 'touch' || !touches.current.has(e.pointerId)) return
+    touches.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    const base = pinch.current
+    if (!base || base.dist <= 0 || touches.current.size !== 2) return
+    setZoomMul(clampZoom(base.zoom * (spread() / base.dist)))
+  }
+
+  /* Lifting either finger ends the gesture rather than re-basing it on one
+     point, so the room cannot lurch as the second finger leaves. */
+  const pinchEnd = (e: React.PointerEvent) => {
+    if (e.pointerType !== 'touch') return
+    touches.current.delete(e.pointerId)
+    if (touches.current.size < 2) pinch.current = null
+  }
 
   /* Drag spins the room about its own axis. Deliberately not an orbit: the
      camera never moves, so the isometric projection survives. */
-  const spinHandlers = freeSpin
-    ? {
-        onPointerDown: (e: React.PointerEvent) => {
-          drag.current = { on: true, x: e.clientX }
-          ;(e.currentTarget as HTMLElement).style.cursor = 'grabbing'
-        },
-        onPointerMove: (e: React.PointerEvent) => {
-          if (!drag.current.on) return
-          spin.current += (e.clientX - drag.current.x) * 0.008
-          drag.current.x = e.clientX
-        },
-        onPointerUp: (e: React.PointerEvent) => {
-          drag.current.on = false
-          ;(e.currentTarget as HTMLElement).style.cursor = 'grab'
-        },
-        onPointerLeave: () => {
-          drag.current.on = false
-        },
-      }
-    : {}
+  const spinDown = (e: React.PointerEvent) => {
+    if (!freeSpin || pinch.current) return
+    drag.current = { on: true, x: e.clientX }
+    ;(e.currentTarget as HTMLElement).style.cursor = 'grabbing'
+  }
+  const spinMove = (e: React.PointerEvent) => {
+    if (!freeSpin || pinch.current || !drag.current.on) return
+    spin.current += (e.clientX - drag.current.x) * 0.008
+    drag.current.x = e.clientX
+  }
+  const spinUp = (e: React.PointerEvent) => {
+    if (!freeSpin) return
+    drag.current.on = false
+    ;(e.currentTarget as HTMLElement).style.cursor = 'grab'
+  }
+
+  const pointerHandlers = {
+    onPointerDown: (e: React.PointerEvent) => {
+      pinchDown(e)
+      spinDown(e)
+    },
+    onPointerMove: (e: React.PointerEvent) => {
+      pinchMove(e)
+      spinMove(e)
+    },
+    onPointerUp: (e: React.PointerEvent) => {
+      pinchEnd(e)
+      spinUp(e)
+    },
+    onPointerCancel: (e: React.PointerEvent) => {
+      pinchEnd(e)
+      spinUp(e)
+    },
+    onPointerLeave: (e: React.PointerEvent) => {
+      pinchEnd(e)
+      if (freeSpin) drag.current.on = false
+    },
+  }
 
   return (
     <div
@@ -323,7 +334,7 @@ export default function FloorPlan({
       ref={wrapper}
       onWheel={onWheel}
       style={freeSpin ? { cursor: 'grab', touchAction: 'none' } : undefined}
-      {...spinHandlers}
+      {...pointerHandlers}
     >
       <Canvas
         flat

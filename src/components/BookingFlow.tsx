@@ -17,6 +17,7 @@ import {
   BookingRejected,
 } from '../data'
 import FloorPlan from '../scene/FloorPlan'
+import { sceneAspect } from '../scene/layout'
 import Gate, { type GateValue } from './Gate'
 import TablePanel from './TablePanel'
 import BookingForm, { type GuestDetails } from './BookingForm'
@@ -186,7 +187,7 @@ export default function BookingFlow({
         </main>
       ) : (
         <main className="app__body">
-          <div className="guest__scene" ref={scene}>
+          <div className="guest__scene" ref={scene} style={sceneAspect}>
             <FloorPlan
               tables={tables}
               stateOf={stateOf}

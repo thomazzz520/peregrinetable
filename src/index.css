@@ -741,8 +741,21 @@ textarea.field {
 
   .guest__scene {
     order: 1;
-    /* Fixed, so dropping the menu down never resizes the room. */
-    flex: 0 0 52dvh;
+    /* Fixed, so dropping the menu down never resizes the room.
+
+       Sized by the room's own projected aspect (--mv-room-aspect, set from the
+       scene constants in FloorPlan.tsx) rather than a share of the viewport.
+       A portrait phone is narrower than the room is wide, so width is what
+       binds the zoom; reserving height beyond this aspect reserved height the
+       room could never grow into, which is where the old 52dvh left a band of
+       dead sky above and below it. The room is not drawn any smaller here,
+       the page simply stops holding space it was not using.
+
+       max-height is the guard for a short landscape window, where the aspect
+       would otherwise ask for more height than there is. */
+    flex: 0 0 auto;
+    aspect-ratio: var(--mv-room-aspect, 1.25);
+    max-height: 62dvh;
     min-height: 260px;
   }
 

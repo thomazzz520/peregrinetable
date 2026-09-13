@@ -15,6 +15,7 @@ import {
   type Table,
 } from '../data'
 import FloorPlan from '../scene/FloorPlan'
+import { sceneAspect } from '../scene/layout'
 import { DateBar, OwnerBar } from '../components/OwnerChrome'
 import Dock, { useDockScroll } from '../components/Dock'
 
@@ -79,7 +80,7 @@ export default function OwnerFloor() {
       <DateBar date={date} onChange={setDate} />
 
       <main className="app__body">
-        <div className="guest__scene" ref={scene}>
+        <div className="guest__scene" ref={scene} style={sceneAspect}>
           <FloorPlan
             tables={tables}
             stateOf={stateOf}
