@@ -1,6 +1,14 @@
 ---
+# Scoped to the booking floor plan — the contained diorama this document was
+# written for and whose reference images it specifies. It is deliberately NOT
+# scoped to the owner dashboard or the office scene (src/office, src/dashboard,
+# src/shell, src/brain): those run the Peregrine design system in
+# .antigravity.md, which allows lights, MeshStandardMaterial and a perspective
+# camera. The glob used to read src/**, which claimed this file governed code
+# it had never described.
 paths:
-  - "src/**/*.{tsx,jsx,ts,css}"
+  - "src/scene/**/*.{tsx,jsx,ts,css}"
+  - "src/components/**/*.{tsx,jsx,ts,css}"
   - "**/*.module.css"
   - "tailwind.config.*"
 ---
