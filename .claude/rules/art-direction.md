@@ -2,13 +2,18 @@
 # Scoped to the booking floor plan — the contained diorama this document was
 # written for and whose reference images it specifies. It is deliberately NOT
 # scoped to the owner dashboard or the office scene (src/office, src/dashboard,
-# src/shell, src/brain): those run the Peregrine design system in
+# src/shell, src/brain, src/three): those run the Peregrine design system in
 # .antigravity.md, which allows lights, MeshStandardMaterial and a perspective
 # camera. The glob used to read src/**, which claimed this file governed code
 # it had never described.
+#
+# src/routes is in scope: every route file composes this document's own
+# surfaces (FloorPlan, BookingFlow, Dock, OwnerChrome) and nothing from the
+# office system.
 paths:
   - "src/scene/**/*.{tsx,jsx,ts,css}"
   - "src/components/**/*.{tsx,jsx,ts,css}"
+  - "src/routes/**/*.{tsx,jsx,ts,css}"
   - "**/*.module.css"
   - "tailwind.config.*"
 ---
@@ -31,14 +36,21 @@ Reference key:
 
 Violating any of these breaks the look completely. Check this list before every commit.
 
-- `PerspectiveCamera` — banned anywhere in the app.
+These bans cover the surfaces this document governs — the booking floor plan in
+`src/scene`, `src/components` and `src/routes`, plus the stylesheets in the
+frontmatter glob. They are **not** in force in the office scene, owner
+dashboard, shell or brain (`src/office`, `src/dashboard`, `src/shell`,
+`src/brain`, `src/three`), which run the Peregrine design system in
+`.antigravity.md`. Read "banned" below as "banned in the floor plan".
+
+- `PerspectiveCamera` — banned.
 - `MeshStandardMaterial`, `MeshPhysicalMaterial`, `MeshLambertMaterial` — banned. `MeshBasicMaterial` only.
 - `<ambientLight>`, `<directionalLight>`, `<pointLight>`, `<spotLight>`, `<Environment>` — banned. The scene contains **zero lights**.
 - `roughness`, `metalness`, `envMap`, `normalMap`, any texture map — banned.
 - Shadow maps, `castShadow`, `receiveShadow`, contact shadows, ambient occlusion — banned.
 - Bloom, chromatic aberration, depth of field, film grain, noise overlays — banned.
 - CSS: `box-shadow`, `backdrop-filter`, `filter: blur()`, gradients on buttons or panels — banned.
-- Border radius above 3px anywhere — banned.
+- Border radius above 3px — banned.
 - Emoji, icon fonts, drop-shadowed cards, glassmorphism — banned.
 
 Every geometry gets `flatShading`. No exceptions.
@@ -233,7 +245,9 @@ Build this once, get it right, and let everything else stay quiet around it.
 
 ## 11. Acceptance checks
 
-Run these against a screenshot before declaring any screen finished. Each one is pass/fail.
+Run these against a screenshot before declaring any floor-plan screen finished.
+Each one is pass/fail. Office and dashboard screens are audited against
+`.antigravity.md` instead.
 
 1. Trace two edges parallel in plan. Do they stay parallel on screen? Converging → camera is wrong.
 2. Is there a single specular highlight or gradient on any 3D face? → material is wrong.
@@ -241,6 +255,6 @@ Run these against a screenshot before declaring any screen finished. Each one is
 4. Estimate accent-yellow coverage. Over 3% → too much.
 5. Does any background hue appear on geometry, or any geometry hue in the background? → palette is wrong.
 6. Squint at the screenshot. Do booked tables recede and available tables advance? If they read as equal weight, the desaturation is too weak.
-7. Is there a `box-shadow` anywhere in the CSS? → remove it.
+7. Is there a `box-shadow` in this screen's CSS? → remove it.
 
 Fix failures before adding features.

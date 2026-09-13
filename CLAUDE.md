@@ -7,10 +7,10 @@ plan, then a time. Owner console manages bookings.
 
 Two design systems, and which applies depends on the surface.
 
-**The booking floor plan** (`src/scene`, `src/components`) is governed by
-`.claude/rules/art-direction.md` — the contained diorama that document was
-written for and whose reference images specify it. Read it before writing any
-component, material, or stylesheet there.
+**The booking floor plan** (`src/scene`, `src/components`, `src/routes`) is
+governed by `.claude/rules/art-direction.md` — the contained diorama that
+document was written for and whose reference images specify it. Read it before
+writing any component, material, or stylesheet there.
 
 Never, in the booking floor plan:
 - PerspectiveCamera — the scene is orthographic only
@@ -19,13 +19,18 @@ Never, in the booking floor plan:
 - box-shadow, backdrop-filter, or border-radius above 3px
 
 **The office scene, owner dashboard, shell and brain** (`src/office`,
-`src/dashboard`, `src/shell`, `src/brain`) run the Peregrine design system in
-`.antigravity.md`, which allows lights, MeshStandardMaterial and a perspective
-camera, and carries its own shadow and corner-radius rules. The prohibitions
-above are not in force there. `.antigravity.md` in turn defers to
-`art-direction.md` as the source of truth for the floor plan's camera,
+`src/dashboard`, `src/shell`, `src/brain`, `src/three`) run the Peregrine
+design system in `.antigravity.md`, which allows lights, MeshStandardMaterial
+and a perspective camera, and carries its own shadow and corner-radius rules.
+The prohibitions above are not in force there. `.antigravity.md` in turn defers
+to `art-direction.md` as the source of truth for the floor plan's camera,
 materials and palette, so the two documents meet at the same boundary rather
 than overlapping.
+
+**`src/theme` is shared and belongs to neither.** `theme.css` is pulled into
+`src/index.css`, so it styles both systems; `tokens.ts` holds the Peregrine
+department palette that `.antigravity.md` locks. Change either with both
+systems in mind, and `src/data` stays design-system-agnostic by nature.
 
 ## Conventions
 
