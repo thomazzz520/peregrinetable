@@ -173,6 +173,11 @@ const C = {
   ink: "#2B2E28",
   attention: "#7FD3B4", // needs-you — sage, never amber (design doc §10)
   torso: ["#2B2E28", "#33362F", "#26281F"],
+  /* Trousers and hair. Neutral, because §2 puts colour on the ground plate
+     and never on a figure standing on it — these stay in the same ink and
+     graphite family as the torso tones above. */
+  leg: ["#4A4F46", "#3B3F38", "#565B51"],
+  hair: ["#1F211D", "#2F332C", "#575C51"],
 };
 
 const HUB_R = 2.8;
@@ -275,31 +280,158 @@ function FlatLabel({
 /* Shape kit                                                          */
 /* ------------------------------------------------------------------ */
 
-const GEO = {
-  head: new THREE.SphereGeometry(0.17, 32, 24),
-  torso: new THREE.CapsuleGeometry(0.16, 0.3, 2, 7),
-  arm: new THREE.CapsuleGeometry(0.05, 0.24, 1, 5),
+/** One figure's parts, built once and shared by every instance. The low
+ *  segment counts are the point rather than a saving — flat-shaded facets are
+ *  what make these read as modelled instead of as smooth primitives (design
+ *  doc §10, level of detail). Every height below is measured from the sole,
+ *  so a figure's feet sit on the plate at y = 0 and nothing needs floating
+ *  into position. */
+const FIG = {
+  foot: new THREE.BoxGeometry(0.072, 0.036, 0.132),
+  shin: new THREE.CapsuleGeometry(0.038, 0.14, 1, 6),
+  thigh: new THREE.CapsuleGeometry(0.05, 0.11, 1, 6),
+  pelvis: new THREE.BoxGeometry(0.165, 0.1, 0.115),
+  /** Wider at the shoulder than at the waist — a cylinder with unequal radii,
+   *  flattened on z where it is used, rather than the barrel a capsule gives. */
+  torso: new THREE.CylinderGeometry(0.115, 0.098, 0.235, 8),
+  neck: new THREE.CylinderGeometry(0.04, 0.046, 0.055, 6),
+  upperArm: new THREE.CapsuleGeometry(0.036, 0.1, 1, 6),
+  forearm: new THREE.CapsuleGeometry(0.031, 0.095, 1, 6),
+  hand: new THREE.SphereGeometry(0.035, 6, 5),
+  hair: new THREE.SphereGeometry(0.104, 10, 6),
 };
 
+/** Three head shapes. The variation is anonymous on purpose: a desk is a
+ *  system, not a person — DEPTS keys desks by "Xero" and "Fresho" — so a
+ *  figure varies to keep a room from looking cloned, it does not portray
+ *  anyone. Giving a named agent their own head is a separate job, and needs
+ *  the desk data to name one first. */
+const HEADS = [
+  new THREE.SphereGeometry(0.1, 10, 8),
+  new THREE.BoxGeometry(0.185, 0.2, 0.175),
+  new THREE.CylinderGeometry(0.1, 0.09, 0.19, 8),
+];
+
+/** Joint heights, sole at 0. */
+const Y = {
+  foot: 0.018, shin: 0.145, thigh: 0.345, pelvis: 0.475,
+  torso: 0.645, shoulder: 0.735, neck: 0.775, head: 0.845,
+};
+
+/** Deterministic choice from a list. The floor is clamped because `hash`
+ *  can return exactly 1. */
+function pick<T>(list: T[], seed: string): T {
+  return list[Math.min(list.length - 1, Math.floor(rand(seed) * list.length))];
+}
+
+/**
+ * A figure at a desk: legs, arms, and a head on a neck.
+ *
+ * Design doc §10 asks for full bodies with visible legs, and for movement
+ * that reads as someone working. What this replaced was a capsule and a
+ * sphere sharing a sine that moved the whole body up and down — legless, and
+ * floating. A figure with feet cannot float, so the idle moved into the body
+ * instead: the weight shifts from one leg to the other, the forearms work,
+ * the head glances around, and the soles stay on the plate.
+ *
+ * Colour stays neutral (§2). The plate underneath carries the department
+ * tone and nothing standing on it may.
+ */
 function Worker({ seed, position }: { seed: string; position: [number, number, number] }) {
-  const group = useRef<THREE.Group>(null);
-  const phase = useMemo(() => rand(seed) * Math.PI * 2, [seed]);
-  const yaw = useMemo(() => (rand(seed + "y") - 0.5) * 0.6, [seed]);
-  const tone = useMemo(() => C.torso[Math.floor(rand(seed + "t") * 3)], [seed]);
+  const upper = useRef<THREE.Group>(null);
+  const head = useRef<THREE.Group>(null);
+  const armL = useRef<THREE.Group>(null);
+  const armR = useRef<THREE.Group>(null);
+
+  const look = useMemo(
+    () => ({
+      phase: rand(seed) * Math.PI * 2,
+      yaw: (rand(seed + "y") - 0.5) * 0.6,
+      torso: pick(C.torso, seed + "t"),
+      leg: pick(C.leg, seed + "l"),
+      hair: pick(C.hair, seed + "h"),
+      capped: rand(seed + "c") > 0.34,
+      head: pick(HEADS, seed + "d"),
+      /** A room of identical heights reads as a copy-paste even when the
+       *  tones differ, so height varies more than anything else here. */
+      scale: 0.95 + rand(seed + "s") * 0.11,
+    }),
+    [seed],
+  );
+
   useFrame((state) => {
-    if (!group.current) return;
     const t = state.clock.elapsedTime;
-    group.current.position.y = Math.sin((t / 3) * Math.PI * 2 + phase) * 0.03;
+    const p = look.phase;
+    // Weight moves off one leg and onto the other. Rotating the upper body
+    // about the sole rather than the hip is what keeps the feet planted.
+    if (upper.current) {
+      upper.current.rotation.z = Math.sin(t * 0.6 + p) * 0.026;
+      upper.current.position.x = Math.sin(t * 0.6 + p) * 0.012;
+    }
+    // Hands at work, the two a beat apart so a room of figures doesn't pulse
+    // in unison the way the old shared sine did.
+    if (armR.current) armR.current.rotation.x = -0.5 + Math.sin(t * 3.4 + p) * 0.1;
+    if (armL.current) armL.current.rotation.x = -0.5 + Math.sin(t * 3.4 + p + 1.1) * 0.1;
+    // Glances, an order of magnitude slower than the hands.
+    if (head.current) head.current.rotation.y = Math.sin(t * 0.23 + p) * 0.26;
   });
+
+  const arm = (side: 1 | -1, ref: React.RefObject<THREE.Group | null>) => (
+    <group position={[side * 0.118, Y.shoulder, 0]} rotation={[0, 0, side * 0.16]}>
+      <mesh castShadow geometry={FIG.upperArm} position={[0, -0.086, 0.012]} rotation={[0.34, 0, 0]}>
+        <meshStandardMaterial color={look.torso} roughness={1} flatShading />
+      </mesh>
+      <group ref={ref} position={[0, -0.158, 0.048]}>
+        <mesh castShadow geometry={FIG.forearm} position={[0, -0.072, 0]}>
+          <meshStandardMaterial color={look.torso} roughness={1} flatShading />
+        </mesh>
+        <mesh castShadow geometry={FIG.hand} position={[0, -0.138, 0]}>
+          <meshStandardMaterial color={C.bone} roughness={0.85} flatShading />
+        </mesh>
+      </group>
+    </group>
+  );
+
+  const leg = (side: 1 | -1) => (
+    <group position={[side * 0.055, 0, 0]}>
+      <mesh castShadow geometry={FIG.foot} position={[0, Y.foot, 0.026]}>
+        <meshStandardMaterial color={C.ink} roughness={0.95} flatShading />
+      </mesh>
+      <mesh castShadow geometry={FIG.shin} position={[0, Y.shin, 0]}>
+        <meshStandardMaterial color={look.leg} roughness={1} flatShading />
+      </mesh>
+      <mesh castShadow geometry={FIG.thigh} position={[0, Y.thigh, 0]}>
+        <meshStandardMaterial color={look.leg} roughness={1} flatShading />
+      </mesh>
+    </group>
+  );
+
   return (
-    <group position={position} rotation={[0, yaw, 0]}>
-      <group ref={group}>
-        <mesh castShadow geometry={GEO.torso} position={[0, 0.34, 0]}>
-          <meshStandardMaterial color={tone} roughness={1} flatShading />
+    <group position={position} rotation={[0, look.yaw, 0]} scale={look.scale}>
+      {leg(1)}
+      {leg(-1)}
+      <group ref={upper}>
+        <mesh castShadow geometry={FIG.pelvis} position={[0, Y.pelvis, 0]}>
+          <meshStandardMaterial color={look.leg} roughness={1} flatShading />
         </mesh>
-        <mesh castShadow geometry={GEO.head} position={[0, 0.72, 0]}>
-          <meshStandardMaterial color="#FFFFFF" roughness={0.85} />
+        <mesh castShadow geometry={FIG.torso} position={[0, Y.torso, 0]} scale={[1, 1, 0.76]}>
+          <meshStandardMaterial color={look.torso} roughness={1} flatShading />
         </mesh>
+        <mesh castShadow geometry={FIG.neck} position={[0, Y.neck, 0]}>
+          <meshStandardMaterial color={C.bone} roughness={0.9} flatShading />
+        </mesh>
+        {arm(1, armR)}
+        {arm(-1, armL)}
+        <group ref={head} position={[0, Y.head, 0]}>
+          <mesh castShadow geometry={look.head} scale={[1, 1, 0.94]}>
+            <meshStandardMaterial color={C.bone} roughness={0.85} flatShading />
+          </mesh>
+          {look.capped ? (
+            <mesh castShadow geometry={FIG.hair} position={[0, 0.034, -0.004]} scale={[1, 0.6, 1.02]}>
+              <meshStandardMaterial color={look.hair} roughness={1} flatShading />
+            </mesh>
+          ) : null}
+        </group>
       </group>
     </group>
   );
