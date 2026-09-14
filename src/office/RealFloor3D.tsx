@@ -448,7 +448,10 @@ function Desk({ position, rotation, label }: { position: [number, number, number
         <boxGeometry args={[0.4, 0.25, 0.03]} />
         <meshStandardMaterial color="#26332C" roughness={1} flatShading />
       </mesh>
-      <Worker seed={label} position={[0, 0, -0.55]} />
+      {/* Close enough that the hands sit over the desk top rather than
+          working thin air. -0.35, not -0.32: the per-seed yaw jitter swings
+          a foot forward, and -0.32 leaves only 2mm on the tightest seed. */}
+      <Worker seed={label} position={[0, 0, -0.35]} />
       {/* 0.09 world units matches what the 8px overlay measured at the
           default camera; it now holds that crispness at any zoom. */}
       <FlatLabel
@@ -658,7 +661,13 @@ function DraftingDesk({ position, rotation = 0 }: { position: [number, number, n
         <planeGeometry args={[0.24, 0.16]} />
         <meshStandardMaterial color="#C15A3E" roughness={1} />
       </mesh>
-      <Worker seed="marketing-drafter" position={[0, 0, 0.34]} />
+      {/* Turned to face the table. The figure has a front now — arms and
+          toes point +z — so standing at +0.34 unturned put its back to the
+          drawing at +0.09, which is not what "bent over the drawing" means.
+          At 0.26, turned, the hands land on the board. */}
+      <group position={[0, 0, 0.26]} rotation={[0, Math.PI, 0]}>
+        <Worker seed="marketing-drafter" position={[0, 0, 0]} />
+      </group>
     </group>
   );
 }
@@ -785,7 +794,10 @@ function AdminDesk({ position, rotation = 0 }: { position: [number, number, numb
         <boxGeometry args={[0.5, 0.3, 0.03]} />
         <meshStandardMaterial color="#26332C" roughness={1} flatShading />
       </mesh>
-      <Worker seed="bookings-desk" position={[0, 0, -0.42]} />
+      {/* This desk is 0.46 deep against Desk's 0.40, so the same standing
+          distance would put the figure inside it. -0.37 gives the hands the
+          same overhang the shallower desk gets. */}
+      <Worker seed="bookings-desk" position={[0, 0, -0.37]} />
       <group position={[0.22, 0.485, -0.14]} rotation={[-0.3, 0.2, 0]}>
         <mesh castShadow>
           <boxGeometry args={[0.05, 0.11, 0.02]} />
