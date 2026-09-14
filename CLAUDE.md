@@ -63,12 +63,16 @@ touch equivalent for §4's hover bob. A tap fires `pointerover` with no matching
 `pointerout`, so the table would stay lifted; `TableMesh` restricts the lift to
 mouse and pen, and selection is what a tap means.
 
-Still owed: the §11 acceptance checks have not been run at phone width.
-`npm run check:data`, `check:guest` and `check:tones` pass, but
-`window.__auditScene()` needs a browser at ~390px and has not been run there
-yet. It is dev-only and lives on the floor plan's canvas, so it reports real
-checks only on `/book` with the gate submitted — party size, date and time —
-since that is what mounts the room. Before then it is a stub that says so.
+The §11 acceptance checks are done. `npm run check:data`, `check:guest` and
+`check:tones` pass, and `window.__auditScene()` was run at phone width against
+the live `/book` scene: zero lights; 165 materials, all MeshBasicMaterial and
+untextured; orthographic with equal XYZ; 364 face groups all carrying the value
+their world normal dictates; the accent on one mesh. Five of five.
+
+To run it again: it is dev-only and lives on the floor plan's canvas, so it
+reports real checks only on `/book` with the gate submitted — party size, date
+and time — since that is what mounts the room. Before then it is a stub that
+says so.
 
 ## Running the server API
 
