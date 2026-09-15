@@ -70,58 +70,86 @@
 .glance__spark i { flex: 1; background: var(--pp-sage); border-radius: 2px 2px 0 0; }
 
 /* ---- revenue ---- */
-.rev__row { display: flex; align-items: center; gap: 18px; flex: 1; min-height: 0; margin-top: 4px; }
-.rev__ring { position: relative; width: 92px; height: 92px; flex: none; }
-.rev__burst { display: block; }
-.rev__centre {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  pointer-events: none;
+/* ---- revenue ----------------------------------------------------------
+   Colour is rationed to one series. The accent is a deep teal at hue 179°,
+   deliberately clear of the whole reserved band: 18° from the sage
+   needs-attention signal at 161° and 13° from Admin's ground at 166°, and
+   far darker than either, so a revenue line can never read as an alert.
+   Every comparison series is achromatic. See the design doc, dashboard top
+   row — revenue. Kept local to the card rather than promoted into the
+   shared tokens, which stay the contract for product-wide colour. */
+.card--revenue {
+  --rev-accent: #12706e;
+  --rev-accent-deep: #0c5654;
+  --rev-neutral: #cfc9bd;
 }
-.rev__amt { font-weight: 700; font-size: 12px; letter-spacing: -0.01em; }
-.rev__sub {
-  font-family: var(--pp-mono); font-size: 7px; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--pp-ink-muted); margin-top: 3px;
-}
-.rev__legend { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; flex: none; }
-.rev__legend li { display: flex; align-items: center; gap: 7px; font-size: var(--pp-size-caption); }
-.rev__legend i { width: 6px; height: 6px; border-radius: 50%; flex: none; }
-.rev__name { min-width: 46px; }
-.rev__pct { color: var(--pp-ink-muted); }
 
-.rev__bars {
-  flex: 1; min-width: 0; display: flex; flex-direction: column;
-  padding-left: 16px; border-left: 1px solid var(--pp-line);
+.rev__filters { display: flex; gap: var(--pp-space-xs); margin-left: auto; }
+.rev__pill {
+  font-size: var(--pp-size-micro); letter-spacing: 0.04em; padding: 3px 9px;
+  border: 1px solid var(--pp-line); border-radius: var(--pp-radius-soft-pill);
+  background: transparent; color: var(--pp-ink-muted); cursor: pointer;
 }
-/* align-items: stretch, not flex-end. With flex-end each column is sized to
-   its content, so `height: 100%` inside it resolves against nothing and every
-   bar collapsed to zero. Stretch gives the column the track's full height and
-   the stack's percentage has something to measure against. */
-.bars { flex: 1; min-height: 54px; display: flex; align-items: stretch; gap: 3px; }
-.bars__col {
-  flex: 1; display: flex; flex-direction: column; justify-content: flex-end;
-  border: 0; background: none; padding: 0; cursor: default;
+.rev__pill:hover { color: var(--pp-ink); border-color: var(--pp-ink-muted); }
+.rev__pill.is-on { color: var(--pp-ink); border-color: var(--pp-ink); }
+/* A range with no series behind it. Still the same quiet outlined pill —
+   faded, not restyled — so it reads as "not yet" rather than as a second
+   kind of control. After :hover so hovering a dead pill does not light it. */
+.rev__pill:disabled,
+.rev__pill:disabled:hover {
+  opacity: 0.4; cursor: not-allowed;
+  color: var(--pp-ink-muted); border-color: var(--pp-line);
 }
-.bars__stack { display: flex; flex-direction: column-reverse; width: 100%; border-radius: 2px 2px 0 0; overflow: hidden; }
-.bars__stack i { display: block; width: 100%; }
-.bars__col:hover .bars__stack { filter: brightness(1.08); }
-.bars__axis {
-  display: flex; justify-content: space-between; gap: 8px;
-  margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--pp-line);
-  font-family: var(--pp-mono); font-size: var(--pp-size-micro); color: var(--pp-ink-muted);
-}
-.bars__axis span:nth-child(2) { color: var(--pp-ink); }
 
-.rev__insight {
-  display: flex; align-items: center; gap: 7px; flex: none;
-  margin: 10px 0 0; padding: 6px 10px;
-  background: color-mix(in srgb, var(--pp-sage) 16%, transparent);
-  border-radius: var(--pp-radius-soft-chip);
-  font-size: var(--pp-size-caption); color: var(--pp-ink);
+.rev__export {
+  display: grid; place-items: center; width: 22px; height: 22px; padding: 0;
+  border: 1px solid var(--pp-line); border-radius: var(--pp-radius-edge);
+  background: transparent; color: var(--pp-ink-muted); cursor: pointer;
 }
-.rev__spark { color: var(--pp-sage-deep); }
+.rev__export:hover { color: var(--pp-ink); border-color: var(--pp-ink-muted); }
 
-/* ---- review ---- */
+/* The number is the point of the card. */
+.rev__figure { display: flex; align-items: baseline; gap: var(--pp-space-sm); margin-top: var(--pp-space-md); flex: none; }
+.rev__total {
+  font-family: var(--pp-display); font-size: 30px; line-height: 1;
+  letter-spacing: -0.015em; color: var(--pp-ink);
+}
+/* Outlined and muted: a trend annotates the total, it does not compete. */
+.rev__trend {
+  font-size: var(--pp-size-micro); letter-spacing: 0.03em; padding: 2px 8px;
+  border: 1px solid var(--pp-line); border-radius: var(--pp-radius-soft-pill);
+  color: var(--pp-ink-muted); white-space: nowrap;
+}
+
+.rev__chart { display: flex; align-items: stretch; gap: 3px; flex: 1; min-height: 46px; margin-top: var(--pp-space-md); }
+.rev__col {
+  position: relative; flex: 1; display: flex; align-items: flex-end; justify-content: center;
+  background: none; border: 0; padding: 0; cursor: pointer;
+}
+/* Behind, full width, achromatic — last week. */
+.rev__prior {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: var(--rev-neutral); border-radius: var(--pp-radius-hair) var(--pp-radius-hair) 0 0;
+}
+/* In front, narrower, the only colour on the card — today. */
+.rev__today {
+  position: relative; width: 56%;
+  background: var(--rev-accent); border-radius: var(--pp-radius-hair) var(--pp-radius-hair) 0 0;
+}
+.rev__col:hover .rev__today { background: var(--rev-accent-deep); }
+
+.rev__axis {
+  display: flex; justify-content: space-between; margin-top: 6px; flex: none;
+  font-size: var(--pp-size-micro); color: var(--pp-ink-muted);
+}
+.rev__axis span:nth-child(2) { color: var(--pp-ink); }
+
+.rev__key { list-style: none; display: flex; gap: var(--pp-space-md); margin: var(--pp-space-sm) 0 0; padding: 0; flex: none; }
+.rev__key li { display: flex; align-items: center; gap: 6px; font-size: var(--pp-size-micro); color: var(--pp-ink-muted); }
+.rev__dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+.rev__dot--today { background: var(--rev-accent); }
+.rev__dot--prior { background: var(--rev-neutral); }
+
 .review__source { font-size: var(--pp-size-micro); font-weight: 700; color: var(--pp-ink-soft); }
 .review__stars { margin-top: 6px; font-size: 12px; letter-spacing: 2px; color: #9A7B3F; flex: none; }
 .review__quote { margin: 6px 0 0; font-size: var(--pp-size-caption); line-height: 1.45; flex: 1; }
@@ -385,56 +413,25 @@
   border-radius: var(--pp-radius-soft-card);
 }
 
-/* The disc and its rays share a wrapper, so drifting and spinning move them
-   together rather than the ring wobbling around a different pivot. */
-.sunGroup { position: absolute; right: 12px; top: 6px; width: 78px; height: 78px; animation: sunDrift 9s ease-in-out infinite; }
-.sunCore {
-  position: absolute; inset: 14px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 32%, #FFF6D6, #FFD866 55%, #FBB63E 100%);
-  box-shadow: 0 0 34px 10px rgba(255,214,102,0.55);
-}
-.sunRays { position: absolute; inset: -26px; animation: sunSpin 60s linear infinite; }
-/* Each ray starts past the disc's own radius and glow; from the centre they
-   render entirely underneath the opaque disc and look like they vanished. */
-.sunRays i {
-  position: absolute; left: 50%; top: 50%; width: 2px; height: 15px;
-  margin-left: -1px; margin-top: 24px;
-  background: rgba(255,214,102,0.65); border-radius: 2px; transform-origin: 50% -24px;
-}
-@keyframes sunDrift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-@keyframes sunSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+/* ---- weather: one isometric scene, flat fills only --------------------
+   The projection matches the office floor plates (30°, from the office
+   camera's 35.19° elevation). Everything the old CSS scene carried that
+   Section 4 rules out went with it: the sun's 34px glow, the fog bands'
+   blur filter, the ambient drift and the 60s ray rotation. What is left
+   is two flat tones per shape and motion only where it distinguishes one
+   state from another. See the design doc, dashboard top row — weather. */
+.weatherScene svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
-/* A pill plus two puffs. A plain rounded rect reads as a stray UI artifact
-   rather than a cloud. */
-.weatherCloud { position: absolute; background: rgba(255,255,255,0.85); border-radius: 999px; }
-.weatherCloud::before, .weatherCloud::after { content: ''; position: absolute; background: inherit; border-radius: 50%; }
-.weatherCloud::before { width: 58%; height: 150%; top: -50%; left: 6%; }
-.weatherCloud::after { width: 50%; height: 150%; top: -50%; right: 4%; }
-.weatherCloud.heavy { background: rgba(255,255,255,0.94); }
+/* Rain and hail fall. Nothing else moves. */
+.wx-fall { animation-name: wxFall; animation-timing-function: linear; animation-iteration-count: infinite; }
+@keyframes wxFall {
+  0% { transform: translateY(0); opacity: 0; }
+  12% { opacity: 1; }
+  100% { transform: translateY(150px); opacity: 0.2; }
+}
 
-.rainDrop {
-  position: absolute; top: 26px; width: 2px; height: 13px; border-radius: 2px;
-  background: linear-gradient(rgba(200,224,255,0), rgba(200,224,255,0.85));
-  animation: rainFall linear infinite;
-}
-@keyframes rainFall { 0% { transform: translateY(0); opacity: 0; } 12% { opacity: 0.9; } 100% { transform: translateY(150px); opacity: 0.15; } }
-.hailDot {
-  position: absolute; top: 26px; width: 5px; height: 5px; border-radius: 50%;
-  background: #F3F8FF; box-shadow: 0 0 3px rgba(180,205,230,0.9);
-  animation: hailFall linear infinite;
-}
-@keyframes hailFall { 0% { transform: translateY(0) rotate(0deg); opacity: 0; } 14% { opacity: 1; } 100% { transform: translateY(150px) rotate(140deg); opacity: 0.25; } }
-.fogBand {
-  position: absolute; left: -12%; width: 124%; height: 15px; border-radius: 999px;
-  background: rgba(255,255,255,0.6); filter: blur(3px);
-  animation: fogDrift ease-in-out infinite alternate;
-}
-@keyframes fogDrift { from { transform: translateX(-5%); } to { transform: translateX(5%); } }
-.star { position: absolute; border-radius: 50%; background: #FFFFFF; animation: starTwinkle ease-in-out infinite; }
-@keyframes starTwinkle { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
-.moonCrescent {
-  position: absolute; right: 20px; top: 10px; width: 42px; height: 42px; border-radius: 50%;
-  background: #F3ECD8; box-shadow: -13px -3px 0 3px #16213A, 0 0 20px rgba(243,236,216,0.35);
+@media (prefers-reduced-motion: reduce) {
+  .wx-fall { animation: none; transform: translateY(70px); }
 }
 
 /* ---- foot traffic: warm sunlit pavement, the office's own silhouettes ---- */

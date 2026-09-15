@@ -1,15 +1,17 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import {
   DAY_TOTAL,
   GLANCE,
   HOURS,
   HOUR_DOLLARS,
   HOUR_SHARE,
-  INSIGHTS,
-  MIX,
+  HOUR_SHARE_PRIOR,
+  REVENUE_RANGES,
+  REVENUE_RANGES_AVAILABLE,
+  REVENUE_TREND,
   REVIEW,
   type GlanceKey,
-  type Slice,
+  type RevenueRange,
 } from './data'
 import { GlanceScene, type Weather } from './GlanceScene'
 
@@ -72,131 +74,102 @@ export function GlanceCard({
  * Revenue
  * ------------------------------------------------------------------ */
 
-/**
- * The ring around the day's total. Not a pie: the spokes are weighted by
- * category but jittered in length, so it reads as a burst rather than a
- * chart you are meant to measure. The figure in the middle is the point.
- */
-function Starburst({ mix }: { mix: Slice[] }) {
-  const lines = useMemo(() => {
-    const cx = 65, cy = 65, rInner = 32, rOuter = 58, spokes = 36
-    let seed = 42
-    const rnd = () => {
-      seed = (seed * 1664525 + 1013904223) % 4294967296
-      return seed / 4294967296
-    }
-    const total = mix.reduce((a, m) => a + m.pct, 0)
-    const assigned: Slice[] = []
-    mix.forEach((m) => {
-      const n = Math.round((m.pct / total) * spokes)
-      for (let i = 0; i < n; i++) assigned.push(m)
-    })
-    while (assigned.length < spokes) assigned.push(mix[mix.length - 1]!)
-    assigned.length = spokes
-
-    return assigned.map((m, i) => {
-      const a = (i / spokes) * Math.PI * 2 - Math.PI / 2
-      const r = rInner + (rOuter - rInner) * (0.6 + rnd() * 0.6)
-      return {
-        x1: cx + Math.cos(a) * rInner,
-        y1: cy + Math.sin(a) * rInner,
-        x2: cx + Math.cos(a) * r,
-        y2: cy + Math.sin(a) * r,
-        color: m.color,
-      }
-    })
-  }, [mix])
-
+/** Out of a tray and up — an escape hatch, not a call to action. */
+function ExportIcon() {
   return (
-    <svg className="rev__burst" width="92" height="92" viewBox="0 0 130 130" aria-hidden>
-      {lines.map((l, i) => (
-        <line
-          key={i}
-          x1={l.x1.toFixed(1)}
-          y1={l.y1.toFixed(1)}
-          x2={l.x2.toFixed(1)}
-          y2={l.y2.toFixed(1)}
-          stroke={l.color}
-          strokeWidth={2.2}
-          strokeLinecap="round"
-          opacity={0.92}
-        />
-      ))}
+    <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden focusable="false">
+      <path d="M8 1.8v7.4M5.2 4.6 8 1.8l2.8 2.8" fill="none" stroke="currentColor"
+        strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M2.8 10.4v3.2h10.4v-3.2" fill="none" stroke="currentColor"
+        strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
 
-/** Bold runs marked with **…** in the insight copy. */
-function Insight({ text }: { text: string }) {
-  const parts = text.split(/\*\*(.+?)\*\*/g)
-  return (
-    <>
-      {parts.map((p, i) => (i % 2 ? <b key={i}>{p}</b> : <span key={i}>{p}</span>))}
-    </>
-  )
-}
-
+/**
+ * Revenue.
+ *
+ * Colour is rationed to the one series that matters: today is the accent,
+ * every comparison is neutral grey, and the eye should land on the right line
+ * without consulting the key first. That is the whole discipline of this card
+ * and the reason the starburst ring it replaced had to go — it spent three
+ * saturated hues on a category mix nobody needs at a glance, one of them a
+ * 40° amber sitting against §2's hard rule. Category mix is a page question.
+ *
+ * See the design doc, dashboard top row — revenue.
+ */
 export function RevenueCard({ onOpen }: { onOpen?: () => void }) {
   const [hover, setHover] = useState<number | null>(null)
-  const insight = useMemo(() => INSIGHTS[Math.floor(Math.random() * INSIGHTS.length)]!, [])
+  const [range, setRange] = useState<RevenueRange>('Today')
+  const stop = (e: React.MouseEvent) => e.stopPropagation()
 
   return (
     <section className="card card--revenue card--open" onClick={onOpen}>
       <header className="card__top">
         <span className="card__label">Revenue</span>
-        <span className="card__range">Today ▾</span>
-        <span className="card__badge">+6.2%</span>
+        <div className="rev__filters" onClick={stop}>
+          {REVENUE_RANGES.map((r) => {
+            /* A range with no series behind it is shown disabled, not left
+               pressable and inert. See REVENUE_RANGES_AVAILABLE. */
+            const ready = REVENUE_RANGES_AVAILABLE.includes(r)
+            return (
+              <button
+                key={r}
+                type="button"
+                className={`rev__pill${r === range ? ' is-on' : ''}`}
+                aria-pressed={r === range}
+                disabled={!ready}
+                title={ready ? undefined : `No ${r.toLowerCase()} figures yet`}
+                onClick={() => setRange(r)}
+              >
+                {r}
+              </button>
+            )
+          })}
+        </div>
+        <button type="button" className="rev__export" aria-label="Export revenue" onClick={stop}>
+          <ExportIcon />
+        </button>
       </header>
 
-      <div className="rev__row">
-        <div className="rev__ring">
-          <Starburst mix={MIX} />
-          <div className="rev__centre">
-            <span className="rev__amt">${DAY_TOTAL.toLocaleString()}</span>
-            <span className="rev__sub">today</span>
-          </div>
-        </div>
-
-        <ul className="rev__legend">
-          {MIX.map((m) => (
-            <li key={m.name}>
-              <i style={{ background: m.color }} />
-              <span className="rev__name">{m.name}</span>
-              <span className="rev__pct">{m.pct}%</span>
-            </li>
-          ))}
-        </ul>
-
-        <div className="rev__bars">
-          <div className="bars">
-            {HOUR_SHARE.map((h, i) => (
-              <button
-                key={HOURS[i]}
-                className="bars__col"
-                onMouseEnter={() => setHover(i)}
-                onMouseLeave={() => setHover(null)}
-                aria-label={`${HOURS[i]} — $${HOUR_DOLLARS[i]}`}
-              >
-                <span className="bars__stack" style={{ height: `${h}%` }}>
-                  {MIX.map((m) => (
-                    <i key={m.name} style={{ height: `${m.pct}%`, background: m.color }} />
-                  ))}
-                </span>
-              </button>
-            ))}
-          </div>
-          <div className="bars__axis">
-            <span>6am</span>
-            <span>{hover === null ? '12pm' : `${HOURS[hover]} · $${HOUR_DOLLARS[hover]}`}</span>
-            <span>5pm</span>
-          </div>
-        </div>
+      {/* The number first, and everything under it in support of it. */}
+      <div className="rev__figure">
+        <span className="rev__total">${DAY_TOTAL.toLocaleString()}</span>
+        <span className="rev__trend">
+          {REVENUE_TREND.up ? '+' : '−'}{REVENUE_TREND.pct}% vs {REVENUE_TREND.against}
+        </span>
       </div>
 
-      <p className="rev__insight">
-        <span className="rev__spark">✦</span>
-        <Insight text={insight} />
-      </p>
+      {/* One accent series in front of a neutral comparison behind it. */}
+      <div className="rev__chart">
+        {HOUR_SHARE.map((h, i) => (
+          <button
+            key={HOURS[i]}
+            type="button"
+            className="rev__col"
+            onMouseEnter={() => setHover(i)}
+            onMouseLeave={() => setHover(null)}
+            onClick={stop}
+            aria-label={`${HOURS[i]} — $${HOUR_DOLLARS[i]}`}
+          >
+            <span className="rev__prior" style={{ height: `${HOUR_SHARE_PRIOR[i]}%` }} />
+            <span className="rev__today" style={{ height: `${h}%` }} />
+          </button>
+        ))}
+      </div>
+
+      <div className="rev__axis">
+        <span>6am</span>
+        <span>{hover === null ? '12pm' : `${HOURS[hover]} · $${HOUR_DOLLARS[hover]}`}</span>
+        <span>5pm</span>
+      </div>
+
+      {/* A dot and a word. With one coloured series there is little to explain,
+          which is the intended outcome rather than a missing feature. */}
+      <ul className="rev__key">
+        <li><i className="rev__dot rev__dot--today" />Today</li>
+        <li><i className="rev__dot rev__dot--prior" />{REVENUE_TREND.against}</li>
+      </ul>
     </section>
   )
 }

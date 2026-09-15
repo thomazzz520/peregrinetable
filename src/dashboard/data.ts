@@ -26,6 +26,30 @@ export const DAY_TOTAL = 2184
 const shareSum = HOUR_SHARE.reduce((a, b) => a + b, 0)
 export const HOUR_DOLLARS = HOUR_SHARE.map((h) => Math.round((DAY_TOTAL * h) / shareSum))
 
+/**
+ * The same twelve hours a week ago, on HOUR_SHARE's own basis so the revenue
+ * card can put today against a comparison without a second scale. This is the
+ * only series on that card allowed to be neutral grey — and the only one that
+ * has to be, since colour there is rationed to today (design doc, dashboard
+ * top row — revenue).
+ */
+export const HOUR_SHARE_PRIOR = [15, 28, 44, 58, 76, 92, 86, 74, 58, 44, 30, 17]
+
+export const REVENUE_TREND = { pct: 6.2, up: true, against: 'last Tue' }
+export const REVENUE_RANGES = ['Today', 'Week', 'Month'] as const
+export type RevenueRange = (typeof REVENUE_RANGES)[number]
+
+/**
+ * Which of those ranges there is actually a series behind.
+ *
+ * Only today is broken down: HOUR_SHARE against HOUR_SHARE_PRIOR, twelve
+ * hours, one demo day. Nothing in this file carries a week or a month, so
+ * the card renders those two pills disabled rather than letting them be
+ * pressed and change nothing. Add the series and add the name here — the
+ * card reads this list and needs no other change.
+ */
+export const REVENUE_RANGES_AVAILABLE: readonly RevenueRange[] = ['Today']
+
 export const REVIEW = {
   source: 'Google',
   stars: 5,
