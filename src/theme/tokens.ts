@@ -56,17 +56,27 @@ export const accent = {
  *  never amber or yellow (design doc §10, acceptance check 5).
  *
  *  Sage is a light mint. It reads as a dot, or as a fill behind navy text;
- *  it does not survive as small text on a light ground. `caution` keeps the
- *  old amber for the things that are bad news rather than an ask — a
- *  cancellation, a no-show — so that sage stays reserved for "this needs
- *  you" and nothing else (§2).
+ *  it does not survive as small text on a light ground. `caution` carries
+ *  the things that are bad news rather than an ask, a cancellation or a
+ *  no-show, so that sage stays reserved for "this needs you" and nothing
+ *  else (§2).
  *
- *  There is deliberately no red: nothing in this product is an emergency,
- *  and a red dot on an owner's dashboard at 6am is a lie. */
+ *  `caution` is a deep mulberry at hue 318, not the amber it used to be.
+ *  The amber sat at hue 41 against Finance's ground at 40.7, which is the
+ *  same colour by any useful measure, and 9deg off the yellow band §2 bans
+ *  outright. Mulberry clears every locked department ground by at least
+ *  50deg. Being dark is the other half of the point: the amber could not
+ *  carry 13px text on paper (2.1:1) and needed a coloured dot beside ink
+ *  words to get around it, where mulberry reads at 8.6:1 and can simply be
+ *  the text. Design doc §11, collision 3.
+ *
+ *  Mulberry is not red, and there is still deliberately no red: nothing in
+ *  this product is an emergency, and a red dot on an owner's dashboard at
+ *  6am is a lie. */
 export const status = {
   ok: '#5AA172',
   attention: '#7FD3B4',
-  caution: '#D9A83E',
+  caution: '#6D2C59',
 } as const
 
 /**

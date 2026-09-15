@@ -21,17 +21,13 @@
 .sheet__print:hover { border-color: var(--pp-sage-deep); color: var(--pp-ink); }
 
 .sheet__note { font-size: var(--pp-size-body); color: var(--pp-ink-muted); margin: var(--pp-space-lg) 0; }
-/* Amber marks the note, it is not the note: --pp-caution as 13px text on
-   paper sits at 2.1:1. The dot carries the colour, the words stay ink at
-   14.8:1, the same split the sage "needs you" states use. */
-.sheet__note--bad { color: var(--pp-ink); }
-.sheet__note--bad::before {
-  content: '';
-  display: inline-block;
-  width: 8px; height: 8px; margin-right: 8px;
-  border-radius: var(--pp-radius-soft-pill);
-  background: var(--pp-caution);
-}
+/* --pp-caution colours the words directly, at 8.6:1 on paper. It used to be
+   an amber that could not clear 2.1:1 as 13px text, so a coloured dot sat
+   beside ink words to carry the colour for it. That split was a contrast
+   dodge, not a pattern: mulberry is dark enough to be the text, so the dot
+   goes. The sage "needs you" states keep their dot, because sage is a light
+   mint that genuinely cannot carry small text and never will. */
+.sheet__note--bad { color: var(--pp-caution); }
 
 .sheet__table { width: 100%; border-collapse: collapse; font-size: var(--pp-size-body); }
 .sheet__table th {
@@ -68,15 +64,16 @@
 }
 .sheet__status--confirmed { color: var(--pp-ink-soft); }
 .sheet__status--seated { color: var(--pp-ok); font-weight: 600; }
-/* A chip, not coloured text — 9px amber on paper was 2.1:1. Ink on the
-   amber fill is 7.0:1, and the fill reads as a status at a glance. */
+/* A chip, not coloured text: 9px uppercase wants a fill behind it to read as
+   a status at a glance. The fill is dark now, so the text on it is paper
+   rather than ink, at 8.6:1. */
 .sheet__status--cancelled,
 .sheet__status--no_show {
   display: inline-block;
   padding: 1px 7px;
   border-radius: var(--pp-radius-soft-pill);
   background: var(--pp-caution);
-  color: var(--pp-ink);
+  color: var(--pp-paper);
   font-weight: 600;
 }
 
@@ -89,13 +86,15 @@
   .sheet__table { font-size: 11px; }
   .sheet__table td { padding: 6px 10px 6px 0; }
   /* Browsers drop background fills when printing, which would leave the
-     cancelled/no-show chip as bare ink with nothing marking it. On paper
-     the underline does that job instead. */
+     cancelled/no-show chip with nothing marking it. On paper the underline
+     does that job instead. The colour has to come back to ink with the
+     fill: on screen the chip is paper-on-mulberry, and paper-coloured text
+     on a dropped background is white on white. */
   .sheet__status--cancelled,
   .sheet__status--no_show {
     padding: 0;
     background: none;
+    color: var(--pp-ink);
     text-decoration: underline;
   }
-  .sheet__note--bad::before { display: none; }
 }

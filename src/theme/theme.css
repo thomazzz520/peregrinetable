@@ -29,11 +29,15 @@
   --pp-sage-deep: #4fae90;
 
   /* Status. Sage is "needs you", never amber (design doc §10). --pp-caution
-     holds the old amber for bad outcomes, which are not asks. No red
-     anywhere: nothing here is an emergency. */
+     holds bad outcomes, which are not asks. It is a deep mulberry at hue
+     318: the amber it replaces sat at hue 41, indistinguishable from
+     Finance's ground at 40.7 and 9deg off the yellow band §2 bans, and it
+     was too light to be text (2.1:1 on paper). Mulberry clears every locked
+     ground by 50deg and reads at 8.6:1. Mulberry is not red, and there is
+     still no red anywhere: nothing here is an emergency. §11 collision 3. */
   --pp-ok: #5aa172;
   --pp-attention: #7fd3b4;
-  --pp-caution: #d9a83e;
+  --pp-caution: #6d2c59;
 
   /* Domain tints — all five locked, design doc §2. Mirror of tokens.ts. */
   --pp-finance: #d9bd82;
