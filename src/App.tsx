@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import OwnerShell from './shell/OwnerShell'
 import VenueBrain from './brain/VenueBrain'
+import FigureLab from './office/FigurePrototype'
 import Guest from './routes/Guest'
 import OwnerFloor from './routes/OwnerFloor'
 import OwnerLogin from './routes/OwnerLogin'
@@ -40,6 +41,10 @@ export default function App() {
       />
       {/* The brain on its own, useful for working on it in isolation. */}
       <Route path="/brain" element={<VenueBrain showScrubber />} />
+      {/* A single figure on a plain ground, for looking at. Nothing in the
+          office scene imports it and it imports nothing from the office
+          scene, so it can be deleted in one line when it has served. */}
+      <Route path="/figure-lab" element={<FigureLab />} />
 
       {/* ---- guest ---- */}
       <Route path="/book" element={<Guest />} />
