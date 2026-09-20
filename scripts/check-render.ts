@@ -65,8 +65,17 @@ type Assertion =
    *  a 278px overlap that nobody can see. */
   | { kind: 'clear'; a: Region; b: Region; gap: number; why: string }
   /** Two sampled pixels differ by at least `min`:1. Catches two colours
-   *  that are far apart in RGB and identical in luminance. */
+   *  that are far apart in RGB and identical in luminance.
+   *  For FILLS only. Sampling a point inside a text element reads whatever
+   *  happens to be at that coordinate, stroke or background, and that
+   *  depends on font metrics: the same assertion measured 3.28:1 locally
+   *  and 14.43:1 on a CI runner with different fonts, passing both times
+   *  and meaning something different each time. Use `distinct` for text. */
   | { kind: 'edge'; a: Probe; b: Probe; min: number; why: string }
+  /** Two elements' computed text colours are visibly different, by RGB
+   *  distance. Deterministic, and immune to how the glyphs happen to
+   *  rasterise. */
+  | { kind: 'distinct'; a: string; b: string; min: number; why: string }
 
 /** Where to sample: an element, and a point within its box as fractions. */
 type Probe = { sel: string; at?: [number, number]; nth?: number }
@@ -174,10 +183,14 @@ const SCENES: Scene[] = [
     shot: '.pop__card',
     assert: [
       { kind: 'painted', sel: '.pg__mentionsBar > span', why: 'mention bars painted transparent if the accent falls out of scope' },
+      /* Computed colour, not sampled pixels: both of these are text, and
+         a probe inside a glyph box reads stroke or background depending on
+         the font the machine happens to have. */
+      { kind: 'distinct', a: '.pg__statN.is-accent', b: '.pg__statN:not(.is-accent)', min: 40, why: 'the rating must read as coloured beside the ink stats next to it' },
       {
-        kind: 'edge', min: 2, why: 'the accented rating must read as coloured beside the ink stat next to it',
-        a: { sel: '.pg__statN.is-accent', at: [0.18, 0.55] },
-        b: { sel: '.pg__mentionsPhrase', at: [0.06, 0.6] },
+        kind: 'edge', min: 2, why: 'the accent bar must separate from the band it sits on',
+        a: { sel: '.pg__mentionsBar > span', at: [0.3, 0.5] },
+        b: { sel: '.pg__mentions[data-tone=\'low\']', at: [0.5, 0.92] },
       },
     ],
   },
@@ -531,6 +544,21 @@ async function runAssertion(cdp: CDP, a: Assertion, where: string, frame: () => 
     } else {
       pass(at(`${sa} clears ${sb} by ${Math.round(gap)}px ${axis}`))
     }
+    return
+  }
+  if (a.kind === 'distinct') {
+    const got = await cdp.eval<{ a: string; b: string } | null>(`(function(){
+      var x = document.querySelector(${JSON.stringify(a.a)});
+      var y = document.querySelector(${JSON.stringify(a.b)});
+      if (!x || !y) return null;
+      return { a: getComputedStyle(x).color, b: getComputedStyle(y).color };
+    })()`)
+    if (!got) return fail(at(`${a.a} or ${a.b} is not on the page`))
+    const rgb = (c: string) => (c.match(/\d+/g) ?? []).slice(0, 3).map(Number)
+    const [A, B] = [rgb(got.a), rgb(got.b)]
+    const d = Math.round(Math.sqrt(A.reduce((s2, v, i) => s2 + (v - (B[i] ?? 0)) ** 2, 0)))
+    if (d < a.min) fail(at(`${a.a} and ${a.b} are only ${d} apart in colour (${got.a} vs ${got.b}), want ${a.min}. ${a.why}`))
+    else pass(at(`${a.a} is ${d} from ${a.b} in colour (${got.a} vs ${got.b})`))
     return
   }
   const f = await frame()
