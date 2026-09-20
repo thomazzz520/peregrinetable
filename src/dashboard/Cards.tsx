@@ -2,6 +2,10 @@ import { useState } from 'react'
 import {
   DAY_TOTAL,
   GLANCE,
+  OUTLOOK,
+  TRAFFIC,
+  TRAFFIC_TODAY,
+  type NewsItem,
   HOURS,
   HOUR_DOLLARS,
   HOUR_SHARE,
@@ -9,7 +13,9 @@ import {
   REVENUE_RANGES,
   REVENUE_RANGES_AVAILABLE,
   REVENUE_TREND,
-  REVIEW,
+  overallRating,
+  ratingTrend,
+  latestReview,
   type GlanceKey,
   type RevenueRange,
 } from './data'
@@ -21,25 +27,37 @@ import { GlanceScene, type Weather } from './GlanceScene'
 
 export function GlanceCard({
   weather,
+  news,
   onOpen,
 }: {
   weather: Weather
+  /** The story the news tab leads with. Rotates on each open; see
+   *  `rotateNews` in `data.ts`. */
+  news: NewsItem
   onOpen?: (tab: GlanceKey) => void
 }) {
   const [tab, setTab] = useState<GlanceKey>('weather')
-  const g = GLANCE[tab]
-  const big = tab === 'weather' ? `${weather.temp}°C` : g.big
-  const tag = tab === 'weather' ? weather.copy.label : g.tag
-  const sub = tab === 'weather' ? weather.copy.desc : g.sub
+  /* Weather and news both carry live-ish values now, so `GLANCE` holds only
+     the tab's label for them and the figures come from the source of truth.
+     Foot traffic is the one tab still reading its copy straight out of it. */
+  const { big, tag, sub } =
+    tab === 'weather'
+      ? { big: `${weather.temp}°C`, tag: weather.copy.label, sub: weather.copy.desc }
+      : tab === 'news'
+        ? { big: news.figure, tag: `${news.who} · ${news.category}`, sub: news.cardSub }
+        : { big: GLANCE.traffic.big, tag: GLANCE.traffic.tag, sub: GLANCE.traffic.sub }
+  const today = OUTLOOK[0]!
+  const trafficPeak = Math.max(...TRAFFIC.map((t) => t.idx))
   return (
     <section
       className="card card--glance card--open"
       data-tab={tab}
+      data-news={tab === 'news' ? news.kind : undefined}
       data-mode={tab === 'weather' ? weather.mode : undefined}
       style={tab === 'weather' ? { background: weather.bg } : undefined}
       onClick={() => onOpen?.(tab)}
     >
-      <GlanceScene tab={tab} weather={weather} />
+      <GlanceScene tab={tab} weather={weather} newsKind={news.kind} />
       <nav className="glance__tabs">
         {(Object.keys(GLANCE) as GlanceKey[]).map((k) => (
           <button
@@ -54,15 +72,63 @@ export function GlanceCard({
           </button>
         ))}
       </nav>
-      <div className="glance__head">
-        <span className="glance__big">{big}</span>
-        <span className="glance__tag">{tag}</span>
-      </div>
-      {'spark' in g && (
-        <div className="glance__spark">
-          {g.spark.map((h, i) => (
-            <i key={i} style={{ height: `${h}%` }} />
-          ))}
+      {/* Weather trades the bare hero number for three facts in the same
+          space. The temperature keeps the display serif and stays the
+          headline — §11 rule 4 is about which number is the headline, not
+          about how many other facts may sit beside it in sans — and the low
+          and the condition are captions on it rather than rivals to it.
+          Every other tab keeps the single big figure it was built around. */}
+      {tab === 'weather' ? (
+        <div className="glance__head glance__head--metrics">
+          <div className="glance__metric">
+            <span className="glance__big">{weather.temp}°</span>
+            <span className="glance__metricL">Now</span>
+          </div>
+          <div className="glance__metric">
+            <span className="glance__metricN">{today.low}°</span>
+            <span className="glance__metricL">Overnight low</span>
+          </div>
+          <div className="glance__metric">
+            <span className="glance__metricN">{weather.copy.label}</span>
+            <span className="glance__metricL">Conditions</span>
+          </div>
+        </div>
+      ) : (
+        <div className="glance__head">
+          {tab === 'news' ? (
+            <span className="glance__figure">
+              <span className="glance__big">{big}</span>
+              <span className="glance__unit">{news.figureUnit}</span>
+            </span>
+          ) : (
+            <span className="glance__big">{big}</span>
+          )}
+          <span className="glance__tag">{tag}</span>
+        </div>
+      )}
+      {/* Foot traffic's week, in the revenue chart's structural format:
+          flat bars off a clean baseline, the day labels as the axis, and
+          colour marking one thing only — today. The palette is this card's
+          own warm ink rather than revenue's teal; it is the discipline that
+          carries across, not the hue. */}
+      {tab === 'traffic' && (
+        <div className="glance__traffic">
+          <div className="glance__trafficBars">
+            {TRAFFIC.map((t) => (
+              <span
+                key={t.day}
+                className={`glance__trafficCol${t.day === TRAFFIC_TODAY ? ' is-today' : ''}`}
+                style={{ height: `${(t.idx / trafficPeak) * 100}%` }}
+              />
+            ))}
+          </div>
+          <div className="glance__trafficAxis">
+            {TRAFFIC.map((t) => (
+              <span key={t.day} className={t.day === TRAFFIC_TODAY ? 'is-today' : ''}>
+                {t.day[0]}
+              </span>
+            ))}
+          </div>
         </div>
       )}
       <p className="glance__sub">{sub}</p>
@@ -150,7 +216,7 @@ export function RevenueCard({ onOpen }: { onOpen?: () => void }) {
             onMouseEnter={() => setHover(i)}
             onMouseLeave={() => setHover(null)}
             onClick={stop}
-            aria-label={`${HOURS[i]} — $${HOUR_DOLLARS[i]}`}
+            aria-label={`${HOURS[i]} · $${HOUR_DOLLARS[i]}`}
           >
             <span className="rev__prior" style={{ height: `${HOUR_SHARE_PRIOR[i]}%` }} />
             <span className="rev__today" style={{ height: `${h}%` }} />
@@ -178,20 +244,55 @@ export function RevenueCard({ onOpen }: { onOpen?: () => void }) {
  * Review
  * ------------------------------------------------------------------ */
 
-export function ReviewCard() {
+/** A stars row that can show a half. Flat glyphs, no new colour. */
+function Stars({ value, label }: { value: number; label?: string }) {
+  const full = Math.floor(value)
+  const half = value - full >= 0.25 && value - full < 0.75
+  const up = value - full >= 0.75
   return (
-    <section className="card card--review">
+    <span className="review__starRow" aria-label={label ?? `${value} out of 5`}>
+      {Array.from({ length: 5 }, (_, i) => {
+        const on = i < full + (up ? 1 : 0)
+        const isHalf = half && i === full
+        return (
+          <span key={i} className={`review__star${on ? ' is-on' : isHalf ? ' is-half' : ''}`} aria-hidden>
+            ★
+          </span>
+        )
+      })}
+    </span>
+  )
+}
+
+export function ReviewCard({ onOpen }: { onOpen?: () => void }) {
+  const o = overallRating()
+  const t = ratingTrend()
+  const l = latestReview()
+
+  return (
+    <section className="card card--review card--open" onClick={onOpen}>
       <header className="card__top">
-        <span className="card__label">
-          New review · {REVIEW.when}
+        <span className="card__label">Reviews</span>
+        {/* The trend pill, in the shape revenue's already uses: a direction
+            and a figure, no colour of its own. */}
+        <span className={`review__trend${t.up ? '' : ' is-down'}`}>
+          <span className="review__arrow" aria-hidden>{t.up ? '↑' : '↓'}</span>
+          {t.up ? '+' : ''}{t.delta.toFixed(1)} vs earlier
         </span>
-        <span className="review__source">{REVIEW.source}</span>
       </header>
-      <div className="review__stars" aria-label={`${REVIEW.stars} stars`}>
-        {'★'.repeat(REVIEW.stars)}
+
+      {/* The venue's rating, not one reviewer's. Display serif, per §11
+          rule 4: this is the card's hero number. */}
+      <div className="review__figure">
+        <span className="review__big">{o.stars.toFixed(1)}</span>
+        <Stars value={o.stars} label={`${o.stars} out of 5 across ${o.count} reviews`} />
+        <span className="review__count">{o.count} reviews</span>
       </div>
-      <blockquote className="review__quote">“{REVIEW.quote}”</blockquote>
-      <footer className="review__who">{REVIEW.who}</footer>
+
+      <blockquote className="review__quote">“{l.review.text}”</blockquote>
+      <footer className="review__who">
+        {l.review.who} · {l.source}
+      </footer>
     </section>
   )
 }

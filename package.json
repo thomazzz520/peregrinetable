@@ -12,9 +12,14 @@
     "check:guest": "esbuild scripts/check-guest.ts --bundle --platform=node --format=esm --outfile=node_modules/.tmp-guest.mjs --log-level=error && node node_modules/.tmp-guest.mjs",
     "check:rules": "esbuild scripts/check-rules.ts --bundle --platform=node --format=esm --outfile=node_modules/.tmp-rules.mjs --log-level=error && node node_modules/.tmp-rules.mjs",
     "check:tones": "esbuild scripts/check-tones.ts --bundle --platform=node --format=esm --outfile=node_modules/.tmp-tones.mjs --log-level=error && node node_modules/.tmp-tones.mjs",
+    "check:news": "esbuild scripts/check-news.ts --bundle --platform=node --format=esm --outfile=node_modules/.tmp-news.mjs --log-level=error && node node_modules/.tmp-news.mjs",
+    "check:series": "esbuild scripts/check-series.ts --bundle --platform=node --format=esm --outfile=node_modules/.tmp-series.mjs --log-level=error && node node_modules/.tmp-series.mjs",
+    "check:render": "esbuild scripts/check-render.ts --bundle --platform=node --format=esm --packages=external --outfile=node_modules/.tmp-render.mjs --log-level=error && node node_modules/.tmp-render.mjs",
+    "check:weather": "esbuild scripts/check-weather.ts --bundle --platform=node --format=esm --outfile=node_modules/.tmp-weather.mjs --log-level=error && node node_modules/.tmp-weather.mjs",
     "dev:api": "esbuild server/dev.ts --bundle --platform=node --format=esm --packages=external --outfile=node_modules/.peacock-api.mjs --log-level=error && node node_modules/.peacock-api.mjs",
     "hash-password": "esbuild scripts/hash-password.ts --bundle --platform=node --format=esm --packages=external --outfile=node_modules/.peacock-hash.mjs --log-level=error && node node_modules/.peacock-hash.mjs",
-    "_argv": "node node_modules/.peacock-argv.mjs"
+    "_argv": "node node_modules/.peacock-argv.mjs",
+    "check": "npm run check:data && npm run check:guest && npm run check:rules && npm run check:tones && npm run check:weather && npm run check:news && npm run check:series"
   },
   "dependencies": {
     "@react-three/drei": "10.7.8",

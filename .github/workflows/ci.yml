@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+# A newer push supersedes an in-flight run on the same branch.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node 20 to match local. `check:render` asks for --experimental-websocket
+      # itself when the runtime needs it, so this is not load-bearing, but the
+      # rest of the toolchain is pinned and this should be too.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc -b
+
+      # Everything that reasons about values: fixtures, palettes, booking
+      # rules. No browser, fast, and it fails before we bother building.
+      - name: Checks
+        run: npm run check
+
+      - name: Build
+        run: npm run build
+
+      # ---- the rendered-output check ----------------------------------
+      # `check:render` drives a real browser, so it needs both a browser and
+      # something serving the app. Neither is assumed.
+
+      - name: Make sure a browser is present
+        run: |
+          if command -v google-chrome >/dev/null 2>&1; then
+            google-chrome --version
+          elif command -v chromium-browser >/dev/null 2>&1; then
+            chromium-browser --version
+            echo "CHROME_PATH=$(command -v chromium-browser)" >> "$GITHUB_ENV"
+          else
+            echo "No browser on the runner, installing chromium"
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq chromium-browser
+            echo "CHROME_PATH=$(command -v chromium-browser)" >> "$GITHUB_ENV"
+          fi
+
+      - name: Start the app
+        run: |
+          nohup npm run dev > dev-server.log 2>&1 &
+          echo "started vite, check:render waits for it to answer"
+
+      # CI is exported by Actions, so the check adds --no-sandbox and
+      # --disable-dev-shm-usage, and waits up to 90s for vite rather than
+      # racing it. Neither applies on a developer machine.
+      - name: Rendered output
+        run: npm run check:render
+
+      # The screenshots are the point of a failure here: they show what the
+      # assertion was looking at. Kept on success too, so a visual change can
+      # be reviewed from the run rather than reproduced locally.
+      - name: Keep the screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendered-output
+          path: screenshots/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Dev server log, if something went wrong
+        if: failure()
+        run: tail -60 dev-server.log || true

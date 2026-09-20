@@ -12,12 +12,14 @@ import {
   ContactPanel,
   HistoryPanel,
   NewsPanel,
+  ReviewsPanel,
   RevenuePanel,
   TrafficPanel,
   WeatherPanel,
 } from '../dashboard/Panels'
 import VenueFloor from '../dashboard/VenueFloor'
 import { pickWeather } from '../dashboard/GlanceScene'
+import { NEWS, rotateNews } from '../dashboard/data'
 import TaskPanel from '../dashboard/TaskPanel'
 import '../dashboard/dashboard.css'
 import './shell.css'
@@ -40,6 +42,7 @@ type View =
   | { kind: 'weather' }
   | { kind: 'traffic' }
   | { kind: 'news' }
+  | { kind: 'reviews' }
   | { kind: 'room' }
   | { kind: 'history' }
   | { kind: 'contact' }
@@ -65,6 +68,12 @@ export default function OwnerShell() {
   /* Picked once and shared, so the card and the page can never disagree
      about what the weather is doing. */
   const weather = useMemo(() => pickWeather(), [])
+
+  /* Which story the news surface leads with. Advanced every time news is
+     opened, so a second look is a different lead rather than the same one
+     every session. See `rotateNews`. */
+  const [newsAt, setNewsAt] = useState(() => Math.floor(Math.random() * NEWS.length))
+  const news = rotateNews(newsAt)
 
   const close = useCallback(() => {
     setView(null)
@@ -95,6 +104,8 @@ export default function OwnerShell() {
         return { eyebrow: 'South Yarra · seven days', title: 'Weather' }
       case 'traffic':
         return { eyebrow: 'Chapel Street · this week', title: 'Foot traffic' }
+      case 'reviews':
+        return { eyebrow: 'What people are saying', title: 'Reviews' }
       case 'news':
         return { eyebrow: 'What lands on you anyway', title: 'Related news' }
       case 'room':
@@ -126,8 +137,10 @@ export default function OwnerShell() {
         return <WeatherPanel weather={weather} />
       case 'traffic':
         return <TrafficPanel />
+      case 'reviews':
+        return <ReviewsPanel />
       case 'news':
-        return <NewsPanel />
+        return <NewsPanel news={news} />
       case 'room':
         return <VenueFloor bookings={bookings} />
       case 'history':
@@ -179,9 +192,16 @@ export default function OwnerShell() {
 
       <main className="shell__body">
         <div className="dash">
-          <GlanceCard weather={weather} onOpen={(tab) => setView({ kind: tab })} />
+          <GlanceCard
+            weather={weather}
+            news={news[0]!}
+            onOpen={(tab) => {
+              if (tab === 'news') setNewsAt((n) => (n + 1) % NEWS.length)
+              setView({ kind: tab })
+            }}
+          />
           <RevenueCard onOpen={() => setView({ kind: 'revenue' })} />
-          <ReviewCard />
+          <ReviewCard onOpen={() => setView({ kind: 'reviews' })} />
         </div>
         <div className="floor">
           <div className="floor__scene">

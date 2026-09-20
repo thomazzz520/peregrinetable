@@ -74,6 +74,83 @@ reports real checks only on `/book` with the gate submitted — party size, date
 and time — since that is what mounts the room. Before then it is a stub that
 says so.
 
+## Checking the rendered output
+
+`npm run check:render` drives a real headless Chrome and measures what
+actually reached the screen. It needs the app running:
+
+```bash
+npm run dev            # in one terminal
+npm run check:render   # in another
+```
+
+**Why it exists.** Every other check reasons about values: a hex in a token
+file, a percentage in a fixture. Four defects got through all of them, and
+through screenshots, because they are only defects once the browser has
+resolved cascade, layout and compositing:
+
+- a bar painted transparent, because `var(--rev-accent)` was scoped to a card
+  and the panel renders in a different subtree, so the rule was simply never
+  in scope
+- a tooltip that opened 94px above its own container and covered the tabs
+- two chart tones 40 RGB units apart and identical in luminance, so the
+  largest segment in every bar had no edge against its neighbour
+- an illustration overlapping a metrics column by 38px, but only at the
+  narrowest three-across width
+
+Four assertion kinds, one per failure mode: `painted`, `inside`, `clear`,
+`edge`. Scenes and assertions live at the top of `scripts/check-render.ts`;
+adding one is a few lines and no plumbing.
+
+**Reading a failure.** Each one names the element, the measurement, the
+threshold and the defect it is guarding against. An `edge` failure also
+prints the two pixels it sampled, so you can tell a genuine collision from a
+probe that missed.
+
+**Two things worth knowing before extending it.**
+
+`clear` compares the union of an element's *drawn* children when given
+`{ sel, union: true }`. Use it for anything SVG: `.weatherScene svg` is
+`inset: 0` and covers the whole card while the figures inside occupy only
+the right of it, so comparing boxes reports a 278px overlap nobody can see.
+
+Captures prove themselves before any pixel is read. This app software-renders
+a three.js floor plan behind every panel, so the compositor lags the DOM, and
+a capture taken too early shows the dashboard still sitting underneath an
+open panel. `settledFrame` keeps capturing until a known colour matches
+*and* two consecutive frames agree, which also rules out catching a panel
+mid-fade. Do not replace that with a sleep.
+
+Screenshots of every scene land in `screenshots/`, which is gitignored.
+`CHECK_RENDER_WIDTHS=1085,1440` picks the widths, `CHECK_RENDER_DEBUG=1`
+prints probe geometry, and `CHROME_PATH` points at a browser if it is
+somewhere unusual.
+
+**It runs in CI, so it is not optional.** `.github/workflows/ci.yml` lints,
+typechecks, runs `npm run check`, builds, then starts the dev server and runs
+`check:render` against it. The screenshots are uploaded as an artifact on
+every run, passing or not, because on a failure they are the fastest way to
+see what the assertion was looking at and on a pass they make a visual change
+reviewable from the run.
+
+Two adjustments happen automatically when `CI` is set and are not wanted
+locally: Chrome gets `--no-sandbox` and `--disable-dev-shm-usage`, because a
+container has no user namespace for the sandbox and a 64MB `/dev/shm` that
+Chrome will otherwise exhaust mid-run, and the server wait goes from 5s to
+90s so the check does not race vite's first compile.
+
+`npm run check` is the browser-free half: fixtures, palettes and booking
+rules. It is fast and it runs before the build, so a bad token fails in
+seconds rather than after a browser has started.
+
+**Lint warnings do not fail CI, deliberately.** `oxlint` exits 0 on warnings
+and there are pre-existing ones, mostly `set-state-in-effect` and `refs`
+findings in `RealFloor3D.tsx`. Turning on `--deny-warnings` is worth doing
+and is its own piece of work: it blocks every PR until those are cleared, so
+it needs the cleanup to land first. It was kept out of the change that
+introduced CI on purpose, so that CI arriving and the codebase going red are
+not the same event.
+
 ## Running the server API
 
 The browser-only adapter is still the default, so `npm run dev` behaves exactly

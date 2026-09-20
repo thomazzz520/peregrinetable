@@ -1,3 +1,4 @@
+import { ratingFor } from '../dashboard/data'
 import { domain } from '../theme/tokens'
 
 /**
@@ -125,7 +126,11 @@ export const DEPARTMENTS: Department[] = [
         name: 'Noah',
         job: 'Reviews & reputation',
         status: 'ok',
-        line: "You're on [[41]] Google reviews at 4.5★; nearby venues sit at 120+. I can text a review link to 60 regulars who came in this week.",
+        /* Reads the review corpus rather than restating a figure. It said
+           "[[41]] Google reviews at 4.5★" while `CONTACTS` said the same
+           thing separately and the reviews panel would have said it a third
+           time, which is three numbers free to drift apart. */
+        line: `You're on [[${ratingFor('google').count}]] Google reviews at ${ratingFor('google').stars}★; nearby venues sit at 120+. I can text a review link to 60 regulars who came in this week.`,
         action: {
           label: 'With your OK',
           primary: 'Send the 60 requests',

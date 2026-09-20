@@ -20,8 +20,14 @@
   padding: 12px 15px;
   overflow: hidden;
 }
-.card--glance { flex: 1.5; position: relative; transition: background 600ms ease; }
-.card--revenue { flex: 2.4; }
+/* The glance card carries three facts on its weather tab now, not one big
+   number, so it takes a little more of the row. The width belongs to the
+   CARD, not to the tab: weather, foot traffic and news are three states of
+   this one element, so none of them can end up wider than its siblings —
+   the siblings are revenue and review, and revenue is what gives up the
+   space. Below 1080px all three go full width and none of this applies. */
+.card--glance { flex: 2; position: relative; transition: background 600ms ease; }
+.card--revenue { flex: 2; }
 .card--review { flex: 1.1; }
 
 .card__top { display: flex; align-items: center; gap: 8px; flex: none; }
@@ -55,7 +61,40 @@
   font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
   color: var(--pp-ink-muted); cursor: pointer;
 }
-.glance__tab:hover { color: var(--pp-ink); }
+/* Hover fills, matching `.shell__tab` — the product's established tab hover,
+   and the reason this row was the odd one out: it changed the label's colour
+   only, which is not an affordance a reader notices before they have already
+   guessed the thing is clickable.
+   
+   All three tabs take it identically; they are one control repeated, and the
+   selected one is the only one that differs.
+   
+   The fill is deliberately WEAKER than the selected fill rather than equal to
+   it. `.shell__tab` has been here already: its comment records that hover and
+   selected were once the same bone fill and a hovered tab could not be told
+   from the open one. It separates them by mechanism (hover fills, selected
+   underlines); this row cannot, because selected here IS the fill, so it
+   separates them by strength instead. Every ground below holds the hover at
+   selected fill, and the DIRECTION of the hover fill follows the ground.
+   
+   On the pale grounds it darkens, on the dark grounds it lightens, and that
+   is the canonical pattern rather than a departure from it: `.shell__tab`'s
+   hover fill is `--pp-bone` on a `--pp-panel` card, which is a fill DARKER
+   than what surrounds it. Ice is the ground that forces the point. Selected
+   sits only 27 RGB units off the resting tab there, because a white veil on
+   an almost-white ground has nowhere to go, so a white hover between the two
+   lands 12 units from rest and 15 from selected and asks the reader to judge
+   two near-identical pale boxes. An ink veil moves the other way instead:
+   hover darkens, selected lightens, and the two can never be confused for
+   each other whatever the ground underneath is doing. Dark grounds keep the
+   white veil, where a darker fill would simply disappear.
+   
+   Hovering the selected tab does nothing, which is why every rule is scoped
+   `:not(.is-on)`. */
+.glance__tab:not(.is-on):hover {
+  background: color-mix(in srgb, var(--pp-bone) 55%, transparent);
+  color: var(--pp-ink);
+}
 .glance__tab.is-on { background: var(--pp-bone); color: var(--pp-ink); }
 .glance__head { display: flex; align-items: baseline; gap: 9px; margin-top: 12px; flex: none; }
 .glance__big { font-family: var(--pp-display); font-size: 26px; line-height: 1; }
@@ -65,9 +104,56 @@
   color: var(--pp-ink-soft); background: var(--pp-bone);
   padding: 3px 7px; border-radius: var(--pp-radius-soft-pill);
 }
-.glance__sub { font-size: var(--pp-size-caption); line-height: 1.45; color: var(--pp-ink-soft); margin: 9px 0 0; }
-.glance__spark { display: flex; align-items: flex-end; gap: 4px; height: 26px; margin-top: 10px; }
-.glance__spark i { flex: 1; background: var(--pp-sage); border-radius: 2px 2px 0 0; }
+/* The narrative line carries the same confidence as the figures above it
+   rather than sitting small and quiet under them: lead size, a little more
+   weight, and more room. It stays SANS — §11 rule 4 gives the display face
+   to titles and to the one hero number, and body copy is body copy however
+   formally it reads. One treatment for all three tabs, because they are
+   three states of one card and a caption that changes size on tab switch
+   reads as a different component. */
+.glance__sub {
+  font-size: var(--pp-size-lead); line-height: 1.5; font-weight: 500;
+  color: var(--pp-ink-soft); margin: 11px 0 0; max-width: 62ch;
+}
+
+/* Three facts where the bare number was. The temperature keeps the display
+   serif and stays the headline; the other two are sans, smaller, and read as
+   captions on it — §11 rule 4's "one hero, everything else support". */
+/* The metrics row is content-sized: it does NOT shrink with the card, so its
+   intrinsic width is what decides how much room the illustration has at the
+   narrowest three-across layout. Tightened here rather than shrinking the
+   illustration to fit around it. */
+.glance__head--metrics { align-items: flex-end; gap: var(--pp-space-md); }
+.glance__metric { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.glance__metricN {
+  font-size: var(--pp-size-lead); font-weight: 600; line-height: 1.1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.glance__metricL {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+}
+/* Foot traffic's week on the card. The revenue chart's structure — flat
+   bars, a clean baseline, the days as an axis — in this card's own warm ink.
+   Colour marks today and nothing else; the other six are the same ink held
+   well back, which is the neutral-comparison role revenue gives grey. */
+.glance__traffic { margin-top: 10px; flex: none; }
+.glance__trafficBars {
+  display: flex; align-items: flex-end; gap: 5px; height: 40px;
+  border-bottom: 1px solid rgba(58,32,20,0.22);
+}
+.glance__trafficCol {
+  flex: 1; background: rgba(58,32,20,0.26);
+  border-radius: var(--pp-radius-hair) var(--pp-radius-hair) 0 0;
+}
+.glance__trafficCol.is-today { background: #7C3A1F; }
+.glance__trafficAxis { display: flex; gap: 5px; margin-top: 5px; }
+.glance__trafficAxis span {
+  flex: 1; text-align: center;
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  letter-spacing: 0.06em; color: rgba(58,32,20,0.55);
+}
+.glance__trafficAxis span.is-today { color: #7C3A1F; font-weight: 700; }
 
 /* ---- revenue ---- */
 /* ---- revenue ----------------------------------------------------------
@@ -79,8 +165,8 @@
    row — revenue. Kept local to the card rather than promoted into the
    shared tokens, which stay the contract for product-wide colour. */
 .card--revenue {
-  --rev-accent: #12706e;
-  --rev-accent-deep: #0c5654;
+  --rev-accent: #266d6c;
+  --rev-accent-deep: #17514f;
   --rev-neutral: #cfc9bd;
 }
 
@@ -90,15 +176,36 @@
   border: 1px solid var(--pp-line); border-radius: var(--pp-radius-soft-pill);
   background: transparent; color: var(--pp-ink-muted); cursor: pointer;
 }
-.rev__pill:hover { color: var(--pp-ink); border-color: var(--pp-ink-muted); }
-.rev__pill.is-on { color: var(--pp-ink); border-color: var(--pp-ink); }
+/* Hover fills, the same move `.shell__tab` and the glance tabs make: a light
+   neutral behind the word, weaker than the selected state so the two never
+   read as the same thing. Scoped `:not(.is-on):not(:disabled)` so neither
+   the current range nor an unavailable one pretends to be pressable. */
+.rev__pill:not(.is-on):not(:disabled):hover {
+  background: color-mix(in srgb, var(--pp-bone) 60%, transparent);
+  color: var(--pp-ink); border-color: var(--pp-ink-muted);
+}
+.rev__pill:focus-visible { outline: 2px solid var(--pp-sage-deep); outline-offset: 2px; }
+/* Selected: filled, not merely outlined. Week and Month were distinguished
+   from Today by border colour alone, which is a difference you have to look
+   for rather than one you see.
+
+   Bolder and slightly wider than its siblings too. With five sources and no
+   logo to anchor them, the fill alone was carrying the whole answer to
+   "which one am I looking at", and at 9px regular that is a small signal. */
+.rev__pill.is-on {
+  color: var(--pp-paper); background: var(--pp-ink); border-color: var(--pp-ink);
+  font-weight: 700; letter-spacing: 0.07em; padding: 4px 12px;
+}
 /* A range with no series behind it. Still the same quiet outlined pill —
    faded, not restyled — so it reads as "not yet" rather than as a second
    kind of control. After :hover so hovering a dead pill does not light it. */
+/* Unavailable, and visibly a different KIND of state from "not selected":
+   dashed, so the border itself says there is nothing behind it. Opacity
+   alone read as a rendering accident next to two solid siblings. */
 .rev__pill:disabled,
 .rev__pill:disabled:hover {
-  opacity: 0.4; cursor: not-allowed;
-  color: var(--pp-ink-muted); border-color: var(--pp-line);
+  opacity: 0.55; cursor: not-allowed; background: transparent;
+  color: var(--pp-ink-muted); border-color: var(--pp-line); border-style: dashed;
 }
 
 .rev__export {
@@ -150,9 +257,58 @@
 .rev__dot--today { background: var(--rev-accent); }
 .rev__dot--prior { background: var(--rev-neutral); }
 
+/* ---- reviews -----------------------------------------------------------
+   No platform colour anywhere on this card or its panel. The stars take the
+   page's own ink at two strengths, which is the same move the outlook icons
+   make: a filled star is ink, an empty one is ink held back. A per-source
+   mark would need five brand colours, and every one of them collides
+   (Google's red and yellow and DoorDash's red are banned outright, Uber
+   Eats and TripAdvisor green sit on Suppliers and sage, Instagram's
+   gradient breaks §10's flat rule).
+
+   That was the first reason. It is no longer the operative one, and the
+   distinction matters if you are here to add logos: this is LOCKED, not
+   waiting on the warm-band re-scope. A brand mark cannot be recoloured and
+   stay the mark, so no palette decision reaches it, and `simple-icons`
+   records no licence for any of the four it would supply. Sources are told
+   apart by name, permanently. See "Reviews, source tabs carry no logos" in
+   `.antigravity.md` before changing this. */
 .review__source { font-size: var(--pp-size-micro); font-weight: 700; color: var(--pp-ink-soft); }
-.review__stars { margin-top: 6px; font-size: 12px; letter-spacing: 2px; color: #9A7B3F; flex: none; }
-.review__quote { margin: 6px 0 0; font-size: var(--pp-size-caption); line-height: 1.45; flex: 1; }
+
+.review__figure { display: flex; align-items: baseline; gap: var(--pp-space-sm); margin-top: 8px; flex: none; }
+/* The venue's rating is this card's one hero number, so it takes the
+   display face at `.pg__statN`'s size. §11 rule 4. */
+/* The card's one coloured thing, and the same teal the panel's rating
+   takes, so the figure keeps its colour when the card opens. */
+.card--review { --rev-accent: #266d6c; }
+.review__big {
+  font-family: var(--pp-display); font-size: 30px; line-height: 1;
+  color: var(--rev-accent); font-variant-numeric: tabular-nums;
+}
+.review__starRow { display: inline-flex; gap: 1px; font-size: 12px; line-height: 1; }
+.review__star { color: var(--pp-line); }
+.review__star.is-on { color: var(--pp-ink-soft); }
+/* A half is the same glyph clipped, not a second character. */
+.review__star.is-half {
+  background: linear-gradient(90deg, var(--pp-ink-soft) 50%, var(--pp-line) 50%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.review__count {
+  margin-left: auto; font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--pp-ink-muted);
+}
+
+/* The trend, in the shape revenue's `.rev__trend` already uses: a direction
+   and a figure, carrying no colour of its own. */
+.review__trend {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  letter-spacing: 0.08em; color: var(--pp-ink-soft);
+}
+.review__arrow { font-size: 11px; line-height: 1; }
+.review__trend.is-down { color: var(--pp-ink-muted); }
+
+.review__quote { margin: 10px 0 0; font-size: var(--pp-size-caption); line-height: 1.45; flex: 1; }
 .review__who { margin-top: 4px; font-size: var(--pp-size-micro); color: var(--pp-ink-muted); flex: none; }
 
 /* ---- tasks ---- */
@@ -220,7 +376,13 @@
    ------------------------------------------------------------------ */
 
 .pg { font-size: var(--pp-size-body); }
-.pg__lede { font-size: var(--pp-size-lead); line-height: 1.5; color: var(--pp-ink-soft); margin: 0 0 var(--pp-space-lg); }
+/* A panel's opening line is not an aside. Same register as the glance
+   card's caption and Ruby's trail: larger than body, a little more weight,
+   and sans, because §11 rule 4 keeps the display face for the title above. */
+.pg__lede {
+  font-size: var(--pp-size-title); line-height: 1.5; font-weight: 500;
+  color: var(--pp-ink-soft); margin: 0 0 var(--pp-space-lg); max-width: 64ch;
+}
 .pg__note { font-size: var(--pp-size-caption); color: var(--pp-ink-muted); margin-top: var(--pp-space-lg); }
 .pg__head {
   font-family: var(--pp-mono); font-size: var(--pp-size-micro); font-weight: 600;
@@ -228,8 +390,19 @@
   margin: var(--pp-space-xl) 0 var(--pp-space-sm);
 }
 
-.pg__stats { display: flex; gap: var(--pp-space-xxl); margin-bottom: var(--pp-space-lg); }
-.pg__statN { font-family: var(--pp-display); font-size: 24px; line-height: 1.1; }
+/* The figures a panel opens with are the largest thing on it. They were
+   24px at regular weight, the same size as a section heading, so nothing in
+   the row led. Applied to `.pg__statN` rather than to one panel, because
+   every detail panel opens with this row and they should not disagree about
+   how important their own headline is. */
+.pg__stats { display: flex; gap: var(--pp-space-xxl); margin-bottom: var(--pp-space-xl); }
+.pg__statN {
+  font-family: var(--pp-display); font-size: 34px; font-weight: 600;
+  line-height: 1.05; letter-spacing: -0.01em; font-variant-numeric: tabular-nums;
+}
+.pg__statL { margin-top: 6px; }
+/* Exactly one figure per panel may carry this. */
+.pg__statN.is-accent { color: var(--rev-accent); }
 .pg__statL {
   font-family: var(--pp-mono); font-size: var(--pp-size-micro);
   letter-spacing: 0.12em; text-transform: uppercase; color: var(--pp-ink-muted); margin-top: 4px;
@@ -247,12 +420,71 @@
 .pg__split { display: flex; gap: var(--pp-space-xl); align-items: stretch; }
 .pg__chart { flex: 1; min-width: 0; }
 .pg__bars { display: flex; align-items: stretch; gap: 5px; height: 150px; }
-.pg__barCol { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; }
+.pg__barCol {
+  position: relative; flex: 1; display: flex; flex-direction: column; justify-content: flex-end;
+  border: 0; background: none; padding: 0; cursor: pointer;
+}
 .pg__barStack { display: flex; flex-direction: column-reverse; width: 100%; border-radius: 3px 3px 0 0; overflow: hidden; }
 .pg__barStack i { display: block; width: 100%; }
-.pg__barCol:hover .pg__barStack { filter: brightness(1.08); }
+
+/* ---- segment separators -------------------------------------------------
+   A hairline in the card's own colour between stacked segments. It draws the
+   boundary mechanically, so the tones no longer have to carry it in
+   luminance alone, which is what lets the palette sit in a brighter register
+   without the segments touching. `--seg-sep: 0` turns it off for a palette
+   that carries its own edges.
+   The stack is column-reverse, so DOM order runs bottom to top and the last
+   child is the visual top: bordering every child but the last puts a line on
+   each internal boundary and none on the bar's crown. */
+.pg__split { --seg-sep: 1.5px; }
+.pg__barStack i:not(:last-child) { border-top: var(--seg-sep) solid #F9F5EC; }
+.pg__logFill i:not(:last-child) { border-right: var(--seg-sep) solid #F9F5EC; }
+.pg__stack { --seg-sep: 1.5px; }
+.pg__stackSeg:not(:last-child) { border-right: var(--seg-sep) solid var(--pp-panel); }
+/* Brightness alone was the whole hover: a bar lit up and told you nothing.
+   The lift is now just the acknowledgement; the tooltip carries the data. */
+.pg__barCol.is-on .pg__barStack { filter: brightness(1.1); }
+.pg__barCol:focus-visible { outline: 2px solid var(--pp-sage-deep); outline-offset: 2px; border-radius: 3px; }
+
+/* ---- tooltips ---------------------------------------------------------
+   Flat, bordered, no shadow and a 3px radius, per §4. Positioned above the
+   thing they describe and allowed to overflow it. */
+/* Pinned to the TOP of the chart area, not floated above the hovered bar.
+   Anchored to the bar it climbed `calc(100% + 8px)` above a full-height
+   column and landed 94px up, over the dimension tabs and the stat row. Here
+   it always sits inside the chart, and an opaque panel over the top of a
+   tall bar reads fine. */
+.pg__tip {
+  position: absolute; top: 2px; bottom: auto; left: 50%; transform: translateX(-50%);
+  z-index: 5; min-width: 148px; text-align: left;
+  background: var(--pp-panel); border: 1px solid var(--pp-ink);
+  border-radius: var(--pp-radius-edge); padding: 8px 10px; pointer-events: none;
+}
+.pg__tipHead {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro); font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--pp-ink);
+  padding-bottom: 5px; margin-bottom: 5px; border-bottom: 1px solid var(--pp-line);
+  white-space: nowrap;
+}
+.pg__tipRow { display: flex; align-items: center; gap: 7px; padding: 2px 0; }
+.pg__tipRow i { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.pg__tipName { flex: 1; font-size: var(--pp-size-caption); color: var(--pp-ink-soft); white-space: nowrap; }
+.pg__tipAmt { font-size: var(--pp-size-caption); font-weight: 600; color: var(--pp-ink); }
+/* The first and last bars anchor their tooltip to their own edge so it
+   cannot overflow the chart horizontally. */
+.pg__barCol:first-child .pg__tip { left: 0; transform: none; }
+.pg__barCol:last-child .pg__tip { left: auto; right: 0; transform: none; }
+.pg__stackSeg:first-child .pg__tip { left: 0; transform: none; }
+.pg__stackSeg:last-child .pg__tip { left: auto; right: 0; transform: none; }
+
+.pg__tipNote {
+  margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--pp-line);
+  font-size: var(--pp-size-micro); color: var(--pp-ink-muted); line-height: 1.4;
+}
 .pg__hrs { display: flex; gap: 5px; margin-top: 6px; }
 .pg__hrs span { flex: 1; text-align: center; font-family: var(--pp-mono); font-size: var(--pp-size-micro); color: var(--pp-ink-muted); }
+.pg__evenKey { font-variant-numeric: tabular-nums; }
+.pg__evenMark span { font-variant-numeric: tabular-nums; }
 
 .pg__log { flex: 1; min-width: 0; border-left: 1px solid var(--pp-line); padding-left: var(--pp-space-xl); }
 .pg__logRow { display: flex; align-items: center; gap: 9px; padding: 2px 0; }
@@ -260,52 +492,311 @@
 .pg__logTrack { flex: 1; height: 5px; background: var(--pp-bone); border-radius: 3px; overflow: hidden; }
 .pg__logFill { display: flex; height: 100%; }
 .pg__logFill i { display: block; height: 100%; }
-.pg__logAmt { font-size: var(--pp-size-caption); font-weight: 600; width: 44px; text-align: right; flex: none; }
+.pg__logAmt {
+  font-family: var(--pp-body); font-size: var(--pp-size-caption); font-weight: 600;
+  width: 44px; text-align: right; flex: none; font-variant-numeric: tabular-nums;
+}
 
 .pg__rows { list-style: none; margin: 0; padding: 0; }
 .pg__rows li { display: flex; align-items: center; gap: 9px; padding: 7px 0; border-bottom: 1px solid var(--pp-bone); }
 .pg__rows i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+/* §11 rule 4: the display face belongs to the panel's hero figures, which
+   on this panel are `.pg__statN`. Every figure in a breakdown row is
+   context, so it stays sans, and tabular numerals keep the column aligned
+   the way a figure column has to be. */
 .pg__rowName { flex: 1; }
-.pg__rowAmt { font-weight: 600; }
-.pg__rowPct { width: 42px; text-align: right; color: var(--pp-ink-muted); }
+.pg__rowAmt { font-family: var(--pp-body); font-weight: 600; font-variant-numeric: tabular-nums; }
+.pg__rowPct {
+  width: 46px; text-align: right; color: var(--pp-ink-muted);
+  font-family: var(--pp-mono); font-size: var(--pp-size-caption);
+  font-variant-numeric: tabular-nums;
+}
 
-.pg__stack { display: flex; height: 16px; border-radius: var(--pp-radius-soft-pill); overflow: hidden; margin: var(--pp-space-sm) 0 var(--pp-space-md); }
-.pg__stack span { display: block; height: 100%; }
+.pg__stack { display: flex; height: 20px; border-radius: var(--pp-radius-soft-pill); margin: var(--pp-space-sm) 0 var(--pp-space-md); }
+.pg__stackSeg { position: relative; display: block; height: 100%; border: 0; padding: 0; cursor: pointer; }
+.pg__stackSeg:first-child { border-radius: var(--pp-radius-soft-pill) 0 0 var(--pp-radius-soft-pill); }
+.pg__stackSeg:last-child { border-radius: 0 var(--pp-radius-soft-pill) var(--pp-radius-soft-pill) 0; }
+.pg__stackSeg.is-on { filter: brightness(1.12); }
+.pg__stackSeg:focus-visible { outline: 2px solid var(--pp-sage-deep); outline-offset: 2px; }
+.pg__stackSeg .pg__tip { top: auto; bottom: calc(100% + 10px); }
 
 .pg__even {
-  position: relative; height: 30px; border-radius: var(--pp-radius-edge);
-  background: var(--pp-sage); overflow: visible; margin-top: var(--pp-space-sm);
+  position: relative; display: flex; height: 30px; border-radius: var(--pp-radius-edge);
+  overflow: visible; margin-top: var(--pp-space-sm);
 }
-.pg__evenCost { position: absolute; inset: 0 auto 0 0; background: #D7DACC; border-radius: var(--pp-radius-edge) 0 0 var(--pp-radius-edge); }
-.pg__evenMark { position: absolute; top: -6px; bottom: -6px; width: 2px; background: var(--pp-ink); }
-.pg__evenMark span {
-  position: absolute; left: 8px; top: -2px; white-space: nowrap;
-  font-family: var(--pp-mono); font-size: var(--pp-size-micro); color: var(--pp-ink);
+.pg__evenSeg { position: relative; height: 100%; border: 0; padding: 0; cursor: pointer; }
+.pg__evenSeg:focus-visible { outline: 2px solid var(--pp-sage-deep); outline-offset: 2px; }
+.pg__evenSeg.is-on { filter: brightness(1.08); }
+.pg__evenSeg .pg__tip { top: auto; bottom: calc(100% + 12px); }
+.pg__evenCost { background: #D7DACC; border-radius: var(--pp-radius-edge) 0 0 var(--pp-radius-edge); }
+/* The kept half takes the revenue accent, which is the one colour this
+   panel rations. It was a hardcoded #4FAE90 that matched nothing. */
+.pg__evenKept { background: var(--rev-accent); border-radius: 0 var(--pp-radius-edge) var(--pp-radius-edge) 0; }
+/* The tick marks the point and carries no type. */
+.pg__evenMark { position: absolute; top: -7px; bottom: -7px; width: 2px; background: var(--pp-ink); }
+
+/* The figure sits ABOVE the bar and clear of the tick, never beside it. The
+   whole block is translated left by its own width plus a gap, so the gap is
+   real at every width rather than an 8px offset the text grows back over. */
+.pg__evenLabel {
+  position: absolute; bottom: calc(100% + 12px);
+  display: flex; flex-direction: column; align-items: flex-end;
+  transform: translateX(calc(-100% - 12px)); white-space: nowrap; text-align: right;
 }
+.pg__evenLabelEyebrow {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro); font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--pp-ink-muted);
+}
+/* The display face, at `.pg__statN`'s size: this is a key figure on the
+   panel and it was the only one whispering. */
+.pg__evenLabelN {
+  font-family: var(--pp-display); font-size: 24px; line-height: 1.1; color: var(--pp-ink);
+  font-variant-numeric: tabular-nums;
+}
+/* Room above the bar for the figure to sit in. */
+.pg__even { margin-top: 62px; }
 .pg__evenKey { display: flex; gap: var(--pp-space-xl); margin-top: var(--pp-space-md); font-size: var(--pp-size-caption); color: var(--pp-ink-soft); }
+
+/* The revenue accent again, declared on the PANEL root.
+   `--rev-accent` is scoped to `.card--revenue` on purpose, and the detail
+   panel lives in `.pop__body`, a different subtree, so `var(--rev-accent)`
+   resolved to nothing here and the break-even bar's kept half painted
+   transparent. Exactly the failure the foot traffic chart had with
+   `--rev-neutral`. Declared locally rather than promoted, because the
+   revenue block's own comment says these stay local to their surface. */
+.pg--revenue {
+  --rev-accent: #266d6c;
+  --rev-accent-deep: #17514f;
+  --rev-neutral: #cfc9bd;
+}
+
+/* ---- break-even, in something you can picture ------------------------- */
+.pg__persp {
+  display: flex; align-items: flex-start; gap: var(--pp-space-lg);
+  margin-top: var(--pp-space-lg); padding: var(--pp-space-lg) var(--pp-space-xl);
+  background: rgba(248, 242, 231, 0.55);
+  border: 1px solid var(--pp-line); border-radius: var(--pp-radius-soft-card);
+}
+/* The croissant carries its own two tones; nothing to inherit. */
+.pg__perspArt { flex: none; margin-top: 4px; }
+.pg__perspBody { min-width: 0; }
+.pg__perspEyebrow {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro); font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--pp-ink-muted);
+}
+/* The sentence is the point of the section, so it takes the panel's lead
+   register. Sans: it is a sentence, not a hero number. */
+.pg__perspLine {
+  font-size: var(--pp-size-lead); font-weight: 500; line-height: 1.5;
+  color: var(--pp-ink); margin: 5px 0 0; max-width: 56ch;
+}
+.pg__perspFoot {
+  font-size: var(--pp-size-caption); color: var(--pp-ink-muted);
+  margin: 7px 0 0; max-width: 62ch; line-height: 1.45;
+}
+/* A placeholder says it is one, in the same voice the outlook's hourly
+   caption uses. */
+.pg__perspFoot.is-stub { font-style: normal; }
+
+/* One movement, mostly rest: a slow rise and settle, then still. */
+.croissantRise { animation: croissantRise 7s ease-in-out infinite; }
+@keyframes croissantRise {
+  0%, 62%, 100% { transform: translateY(0); }
+  71% { transform: translateY(-2.5px); }
+  80% { transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) { .croissantRise { animation: none; } }
 .pg__evenKey i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
 
 /* ---- weather ---- */
 .pg__week { list-style: none; margin: 0; padding: 0; }
-.pg__week li { display: flex; align-items: baseline; gap: var(--pp-space-md); padding: 9px 0; border-bottom: 1px solid var(--pp-bone); }
+.pg__week li { border-bottom: 1px solid var(--pp-bone); }
 .pg__week li.is-now { font-weight: 600; }
+
+/* The row itself is the control. It keeps the flex line the li used to
+   carry, so a collapsed row sits exactly where it sat before the icon and
+   the chevron joined it — a button reset, not a restyle. */
+.pg__weekRow {
+  display: flex; align-items: baseline; gap: var(--pp-space-md);
+  width: 100%; padding: 9px 0; margin: 0;
+  border: 0; background: none; text-align: left;
+  font: inherit; color: inherit; cursor: pointer;
+}
+.pg__weekRow:hover .pg__weekDay,
+.pg__weekRow:hover .pg__weekChev { color: var(--pp-ink); }
+.pg__weekRow:focus-visible { outline: 2px solid var(--pp-sage-deep); outline-offset: 2px; }
+
+/* Flat, two-value, drawn from the card's own primitives. Colour is set per
+   condition inside `WeatherIcon` — its own ground's hue, never a new one —
+   so there is nothing to set here but the box. */
+.pg__wx { flex: none; align-self: center; }
+
 .pg__weekDay { width: 46px; font-family: var(--pp-mono); font-size: var(--pp-size-caption); text-transform: uppercase; letter-spacing: 0.08em; }
 .pg__weekTemp { font-family: var(--pp-display); font-size: var(--pp-size-title); width: 42px; }
 .pg__weekLow { color: var(--pp-ink-muted); width: 34px; }
 .pg__weekLabel { width: 92px; color: var(--pp-ink-soft); }
-.pg__weekNote { flex: 1; color: var(--pp-ink-muted); font-size: var(--pp-size-caption); }
+/* One line collapsed; the open row prints it in full underneath. */
+.pg__weekNote {
+  flex: 1; min-width: 0; color: var(--pp-ink-muted); font-size: var(--pp-size-caption);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.pg__weekChev {
+  flex: none; align-self: center; color: var(--pp-ink-muted);
+  transition: transform 0.16s ease;
+}
+.pg__weekRow[aria-expanded='true'] .pg__weekChev { transform: rotate(90deg); }
+
+/* ---- one open day ---- */
+.pg__weekOpen { padding: 2px 0 var(--pp-space-lg) 30px; }
+
+.pg__weekFig { display: flex; align-items: baseline; gap: var(--pp-space-sm); }
+.pg__weekFigN { font-family: var(--pp-display); font-size: var(--pp-size-display); line-height: 1; }
+.pg__weekFigN--low { color: var(--pp-ink-muted); margin-left: var(--pp-space-md); }
+.pg__weekFigL {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro); font-weight: 400;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--pp-ink-muted);
+}
+.pg__weekFull {
+  font-weight: 400; font-size: var(--pp-size-body); color: var(--pp-ink-soft);
+  margin: var(--pp-space-sm) 0 var(--pp-space-md); max-width: 54ch;
+}
+
+/* The hour strip. Flat, one scale, no fill and no gradient — the revenue
+   chart's discipline, and its colour rationing: ink everywhere, accent on
+   "now" and nowhere else. */
+.pg__hours {
+  list-style: none; display: flex; gap: 2px; margin: 0; padding: 0;
+  border-top: 1px solid var(--pp-line); padding-top: var(--pp-space-md);
+}
+.pg__hours li {
+  flex: 1; min-width: 0; border-bottom: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 5px 0; border-radius: var(--pp-radius-edge);
+}
+.pg__hourT { font-size: var(--pp-size-caption); font-weight: 600; color: var(--pp-ink-soft); }
+.pg__hourH {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  letter-spacing: 0.06em; color: var(--pp-ink-muted);
+}
+.pg__hours li.is-now { background: color-mix(in srgb, var(--pp-sage) 22%, transparent); }
+.pg__hours li.is-now .pg__hourT,
+.pg__hours li.is-now .pg__hourH { color: var(--pp-ink); }
+
+.pg__hourNote {
+  font-size: var(--pp-size-micro); font-weight: 400; line-height: 1.5;
+  color: var(--pp-ink-muted); margin: var(--pp-space-sm) 0 0; max-width: 62ch;
+}
 
 /* ---- foot traffic ---- */
 .pg__traffic { display: flex; align-items: flex-end; gap: var(--pp-space-md); height: 170px; }
-.pg__trafficCol { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; gap: 6px; }
+.pg__trafficCol { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; gap: 6px; min-width: 0; }
+/* Takes whatever the two labels leave, and nothing else resolves against it.
+   `min-height: 0` is load-bearing: without it the track refuses to shrink
+   below its content and the bars clamp again. */
+.pg__trafficTrack { flex: 1; min-height: 0; width: 100%; display: flex; align-items: flex-end; }
 .pg__trafficN { font-family: var(--pp-mono); font-size: var(--pp-size-caption); color: var(--pp-ink-soft); }
-.pg__trafficBar { width: 100%; background: var(--pp-sage); border-radius: 3px 3px 0 0; }
+/* Six neutral, one coloured. The accent is this surface's own warm deep —
+   hue 17, 33deg clear of the yellow band §2 bans, and separated from
+   Roster's dusty rose by 42 points of lightness rather than by hue.
+
+   BOTH tones are declared on the panel root, not on the chart. The first
+   cut of this reached for `--rev-neutral`, which is scoped to
+   `.card--revenue` on purpose — the revenue block says so in as many words,
+   "kept local to the card rather than promoted into the shared tokens" — so
+   inside the popup it resolved to nothing and six of seven bars painted
+   transparent. The legend dot beside them did the same. Declaring them here
+   covers the chart and the key together, since the key is the chart's
+   sibling and would miss a variable set on the chart itself. The neutral is
+   revenue's value repeated deliberately, not shared: same role, same grey,
+   still local. */
+.pg--traffic {
+  --traffic-accent: #7C3A1F;
+  --traffic-rest: #cfc9bd;
+}
+.pg__trafficBar { width: 100%; flex: none; background: var(--traffic-rest); border-radius: 3px 3px 0 0; }
+.pg__trafficCol.is-today .pg__trafficBar { background: var(--traffic-accent); }
+.pg__trafficCol.is-today .pg__trafficN { color: var(--pp-ink); font-weight: 600; }
+.pg__trafficCol.is-today .pg__trafficDay { color: var(--traffic-accent); font-weight: 700; }
+.pg__trafficDot--today { background: var(--traffic-accent); }
+.pg__trafficDot--rest { background: var(--traffic-rest); }
+.pg__trafficKey { margin-top: var(--pp-space-md); }
+
+/* The range pills sit on the section heading's own line. */
+.pg__rangeRow { display: flex; align-items: center; gap: var(--pp-space-md); }
+.pg__head--inline { margin-top: var(--pp-space-xl); margin-bottom: var(--pp-space-sm); }
+.pg__rangeRow .rev__filters { margin-left: auto; }
 .pg__trafficDay { font-family: var(--pp-mono); font-size: var(--pp-size-micro); text-transform: uppercase; color: var(--pp-ink-muted); }
 
 /* ---- news ---- */
-.pg__news { list-style: none; margin: 0; padding: 0; }
-.pg__news li { padding: var(--pp-space-lg) 0; border-bottom: 1px solid var(--pp-bone); }
-.pg__newsTag { font-family: var(--pp-mono); font-size: var(--pp-size-micro); letter-spacing: 0.12em; text-transform: uppercase; color: var(--pp-ink-muted); }
+/* Each story is a surface, not a row. A hairline divider made three stories
+   read as one scroll; a container with its own ground makes them read as
+   three things that arrived separately, which is what they are. The ground
+   is the light end of that kind's own hue, so the panel and the card agree
+   on what a rate story looks like. */
+.pg__news { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--pp-space-md); }
+.pg__news li {
+  position: relative;
+  padding: var(--pp-space-lg) var(--pp-space-xl);
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-radius-soft-card);
+  border-bottom: 1px solid var(--pp-line);
+}
+/* Three things carry the difference, because at this lightness the tint
+   alone cannot. The first cut used #F2F3FA / #F6F2F9 / #F2F3F3, which measure
+   4.2 apart in RGB between rate and award: not a subtle distinction, no
+   distinction at all, with the left rule doing every bit of the work. The
+   hues are only 30deg apart and 30deg of hue at 95% lightness is nothing.
+   
+   So the tints go as deep as body text allows (6.7:1 at the darkest, well
+   over the 4.5:1 a 13px line needs), and a full-strength edge band in the
+   kind's own hue runs the height of the card beside them. Tint, band and
+   category chip are one signal in three strengths of the same hue. */
+.pg__news li::before {
+  content: ''; position: absolute; left: 0; top: -1px; bottom: -1px; width: 5px;
+  border-radius: var(--pp-radius-soft-card) 0 0 var(--pp-radius-soft-card);
+}
+.pg__news li[data-news='rate'] { background: #DDDFF3; border-color: #C9CCE6; }
+.pg__news li[data-news='rate']::before { background: #252856; }
+.pg__news li[data-news='award'] { background: #E7DFF1; border-color: #D5C9E4; }
+.pg__news li[data-news='award']::before { background: #3B2B4F; }
+.pg__news li[data-news='council'] { background: #E2E6E9; border-color: #CDD3D6; }
+.pg__news li[data-news='council']::before { background: #34383B; }
+
+/* Category, issuer, time. The CATEGORY leads and is the strongest of the
+   three, because "what kind of news is this" is what the eye is sorting on
+   when it runs down the list. The issuer is attribution and the time is
+   §11 rule 12's absolute clock, both in support. */
+.pg__newsTop { display: flex; align-items: baseline; gap: var(--pp-space-sm); margin-bottom: 7px; }
+.pg__newsCat {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro); font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--pp-paper);
+  padding: 3px 8px; border-radius: var(--pp-radius-soft-pill);
+}
+.pg__news li[data-news='rate'] .pg__newsCat { background: #252856; }
+.pg__news li[data-news='award'] .pg__newsCat { background: #3B2B4F; }
+.pg__news li[data-news='council'] .pg__newsCat { background: #34383B; }
+.pg__newsWho {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro); font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--pp-ink-soft);
+}
+/* A step darker than `--pp-ink-muted`, which was tuned for paper and drops
+   under 3:1 on these tints. */
+.pg__newsWhen {
+  margin-left: auto;
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  letter-spacing: 0.08em; color: #5F6A7D;
+}
+
+/* Present, and under the headline rather than beside it. */
+.pg__newsSrc {
+  display: inline-flex; align-items: center; gap: 5px; margin-top: var(--pp-space-md);
+  font-size: var(--pp-size-caption); color: #5F6A7D;
+  text-decoration: none; border-bottom: 1px solid rgba(22,37,64,0.22);
+  padding-bottom: 1px;
+}
+.pg__newsSrc:hover { color: var(--pp-ink); border-bottom-color: var(--pp-ink-muted); }
+.pg__newsSrc:focus-visible { outline: 2px solid var(--pp-sage-deep); outline-offset: 3px; }
 .pg__newsHead { font-family: var(--pp-display); font-weight: 500; font-size: var(--pp-size-title); margin: 5px 0 6px; }
 .pg__newsBody { margin: 0; color: var(--pp-ink-soft); line-height: 1.5; }
 .pg__newsHits {
@@ -369,13 +860,100 @@
 }
 .pg__rowPctWide { color: var(--pp-ink-muted); font-size: var(--pp-size-caption); }
 
+/* ---- reviews panel ----------------------------------------------------
+   The locked accent, declared on this panel's root the way `.pg--revenue`
+   declares it. It is the same teal revenue's "today" bar carries; the
+   revenue block keeps these local to their surface rather than promoting
+   them into the shared tokens, and this follows that. */
+.pg--reviews { --rev-accent: #266d6c; }
+
+.pg__mentionsRow { display: grid; grid-template-columns: 1fr 1fr; gap: var(--pp-space-md); }
+.pg__mentions {
+  padding: var(--pp-space-md) var(--pp-space-lg);
+  border: 1px solid var(--pp-line); border-radius: var(--pp-radius-soft-card);
+}
+/* Two neutral grounds, a hair apart. Enough for the eye to separate the
+   bands without a second saturated colour, which this panel does not have
+   to spend: the accent is already committed to the rating. */
+.pg__mentions[data-tone='high'] { background: rgba(248, 242, 231, 0.55); }
+.pg__mentions[data-tone='low'] { background: rgba(217, 207, 188, 0.42); border-color: var(--pp-sand); }
+
+/* The weight ladder. These three were all landing at about the same
+   visual weight, so nothing led. Eyebrow small and held back, phrase bold
+   and largest, count light and mono, matching how `.pg__rows` already
+   ranks name against amount against percentage. */
+.pg__mentionsHead {
+  display: block; font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--pp-ink-muted); opacity: 0.85;
+}
+.pg__mentionsList { list-style: none; margin: var(--pp-space-md) 0 0; padding: 0; }
+.pg__mentionsList li {
+  display: flex; align-items: center; gap: var(--pp-space-sm);
+  padding: 7px 0; border-bottom: 1px solid var(--pp-bone);
+}
+.pg__mentions[data-tone='low'] .pg__mentionsList li { border-bottom-color: rgba(22, 37, 64, 0.08); }
+.pg__mentionsList li:last-child { border-bottom: 0; }
+.pg__mentionsPhrase {
+  flex: 1; min-width: 0;
+  font-size: var(--pp-size-title); font-weight: 700; line-height: 1.2;
+  color: var(--pp-ink);
+}
+/* The share, drawn. Neutral ink, never the accent. */
+.pg__mentionsBar {
+  flex: none; width: 72px; height: 7px; border-radius: 4px;
+  background: rgba(22, 37, 64, 0.09); overflow: hidden;
+}
+/* The fill takes the locked accent. It was neutral ink, on the reasoning
+   that colour should mark one figure only, and with the accent then sitting
+   on a single dark teal numeral beside dark navy there was nothing on the
+   panel that read as coloured at all. Two related things now carry it, the
+   rating and the shares, and everything else stays ink. 5.54:1 on the
+   lighter band and 4.89:1 on the darker one, both well over the 3:1 a
+   graphical object owes its ground. */
+.pg__mentionsBar > span {
+  display: block; height: 100%; border-radius: 3px;
+  background: var(--rev-accent);
+}
+/* The count is the exact claim, kept light so the bar leads and the
+   number confirms. */
+.pg__mentionsN {
+  flex: none; width: 46px; text-align: right;
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro); font-weight: 400;
+  letter-spacing: 0.04em; white-space: nowrap;
+  /* Lighter than the phrase, but still type: `--pp-ink-muted` is tuned for
+     paper and fell to 2.99:1 on the darker band. */
+  color: color-mix(in srgb, var(--pp-ink) 70%, transparent);
+}
+.pg__mentionsNone {
+  margin: var(--pp-space-sm) 0 0; font-size: var(--pp-size-caption);
+  line-height: 1.45; color: var(--pp-ink-muted);
+}
+.pg__mentionsFoot { margin-top: var(--pp-space-md); }
+
+.pg__reviews { list-style: none; margin: 0; padding: 0; }
+.pg__reviews li { padding: var(--pp-space-md) 0; border-bottom: 1px solid var(--pp-bone); }
+.pg__reviews li:last-child { border-bottom: 0; }
+.pg__reviewTop { display: flex; align-items: baseline; gap: var(--pp-space-sm); margin-bottom: 5px; }
+.pg__reviewWho {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro); font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--pp-ink-soft);
+}
+.pg__reviewWhen {
+  margin-left: auto; font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  letter-spacing: 0.08em; color: var(--pp-ink-muted);
+}
+/* Comment bodies are sans, per rule 5. */
+.pg__reviewText { margin: 0; font-size: var(--pp-size-body); line-height: 1.55; color: var(--pp-ink-soft); max-width: 78ch; }
+
 /* The detail panels sit on card-white inside the paper popup, the way the
    standalone demo's pages did — the sections read as separate surfaces
    rather than one long sheet. */
+/* `.pg__news` is deliberately absent: its items carry their own grounds now,
+   and one shared surface behind them would flatten the distinction back out. */
 .pop__body .pg__split,
 .pop__body .pg__week,
 .pop__body .pg__traffic,
-.pop__body .pg__news,
 .pop__body .pg__log2 {
   background: rgba(248, 242, 231, 0.55);
   border: 1px solid var(--pp-line);
@@ -383,13 +961,13 @@
   padding: 18px 20px;
 }
 .pop__body .pg__week li:last-child,
-.pop__body .pg__news li:last-child,
 .pop__body .pg__log2 li:last-child { border-bottom: 0; }
 .pop__body .pg__rows li:last-child { border-bottom: 0; }
 
 /* ------------------------------------------------------------------
-   The glance card's moving background. All CSS shapes — no images, no
-   icon font — so the card carries a sky without carrying a payload.
+   The glance card's moving background. Inline SVG and CSS keyframes —
+   no images, no icon font — so the card carries a sky without carrying
+   a payload.
    ------------------------------------------------------------------ */
 
 .card--glance { position: relative; border-color: rgba(255,255,255,0.5); }
@@ -400,38 +978,110 @@
 .card--glance[data-mode='light'] .glance__tab.is-on { color: #0F2A40; }
 .card--glance[data-mode='light'] .glance__tab { color: rgba(15,42,64,0.55); }
 .card--glance[data-mode='light'] .glance__tab.is-on { background: rgba(255,255,255,0.45); }
+.card--glance[data-mode='light'] .glance__tab:not(.is-on):hover { background: rgba(15,42,64,0.08); color: #0F2A40; }
 .card--glance[data-mode='light'] .glance__tag { background: rgba(255,255,255,0.55); color: #0F2A40; }
-.card--glance[data-mode='light'] .glance__sub { color: rgba(15,42,64,0.72); }
+.card--glance[data-mode='light'] .glance__sub { color: rgba(15,42,64,0.82); }
+.card--glance[data-mode='light'] .glance__metricN { color: #0F2A40; }
+.card--glance[data-mode='light'] .glance__metricL { color: rgba(15,42,64,0.72); }
 .card--glance[data-mode='dark'] .glance__big { color: #FBFBF9; }
 .card--glance[data-mode='dark'] .glance__tab { color: rgba(255,255,255,0.55); }
 .card--glance[data-mode='dark'] .glance__tab.is-on { color: #FBFBF9; background: rgba(255,255,255,0.16); }
+.card--glance[data-mode='dark'] .glance__tab:not(.is-on):hover { background: rgba(255,255,255,0.07); color: #FBFBF9; }
 .card--glance[data-mode='dark'] .glance__tag { background: rgba(255,255,255,0.16); color: #FBFBF9; }
-.card--glance[data-mode='dark'] .glance__sub { color: rgba(255,255,255,0.78); }
+.card--glance[data-mode='dark'] .glance__sub { color: rgba(255,255,255,0.94); }
+.card--glance[data-mode='dark'] .glance__metricN { color: #FBFBF9; }
+.card--glance[data-mode='dark'] .glance__metricL { color: rgba(255,255,255,0.78); }
 
 .weatherScene, .trafficScene, .newsScene {
   position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
   border-radius: var(--pp-radius-soft-card);
 }
 
-/* ---- weather: one isometric scene, flat fills only --------------------
-   The projection matches the office floor plates (30°, from the office
-   camera's 35.19° elevation). Everything the old CSS scene carried that
-   Section 4 rules out went with it: the sun's 34px glow, the fog bands'
-   blur filter, the ambient drift and the 60s ray rotation. What is left
-   is two flat tones per shape and motion only where it distinguishes one
-   state from another. See the design doc, dashboard top row — weather. */
+/* ---- weather: one flat, full-card illustration -------------------------
+   The isometric scene this replaces is gone entirely — no plate, no 30°
+   grid, no projection tied to the office camera, no third dimension. The
+   condition owns the card edge to edge and the illustration sits on it at
+   full size. See the design doc, dashboard top row — weather.
+
+   §4's ban on glow, blur, soft shadow and gradient still holds here. What
+   is relaxed, narrowly, is its ban on ambient motion: slow cloud drift and
+   one slow sun rotation are now allowed, because a flat full-card
+   illustration with nothing moving reads as inert rather than calm. The
+   doc names QUANTITY as the failure mode, so the budget is two drifting
+   shapes, or one rotation, and not both at once. */
 .weatherScene svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
-/* Rain and hail fall. Nothing else moves. */
+/* The type column keeps the left of the card to itself. The composition is
+   weighted right in the SVG to match, so the two never overlap and the
+   illustration never needs a scrim to stay legible under text. */
+/* Both capped to the same column. The cap is set by the narrowest card the
+   three-across row produces, since the art is pinned to the right edge and
+   the type has to clear it there too, not only at desktop width. */
+.card--glance[data-tab='weather'] .glance__head,
+.card--glance[data-tab='weather'] .glance__sub { max-width: 56%; }
+
+/* Apple Weather's hierarchy, not its rendering: the temperature is the
+   card's hero number and takes the display serif per §11 rule 4, and the
+   condition word sits under it in sans as supporting text — plain, not in a
+   pill, because a pill makes it a badge competing with the number above it. */
+.card--glance[data-tab='weather'] .glance__head:not(.glance__head--metrics) { flex-direction: column; align-items: flex-start; gap: 3px; }
+.card--glance[data-tab='weather'] .glance__big { font-size: 38px; letter-spacing: -0.01em; }
+.card--glance[data-tab='weather'] .glance__tag {
+  font-family: var(--pp-body);
+  font-size: var(--pp-size-caption);
+  letter-spacing: 0.01em;
+  text-transform: none;
+  font-weight: 600;
+  background: transparent;
+  padding: 0;
+}
+
+/* The muted type opacities the other two tabs use were set against the pale
+   paper/bone/clay grounds this card used to have. The condition grounds are
+   deep — sun is lightness 37 — so those alphas no longer clear 4.5:1 on an
+   11px caption, and the takeover is what changed that. Raised here to the
+   alphas the deepest ground in the set actually needs (sun tops out at
+   5.05:1 with paper at full opacity, so there is not much room above this).
+   The active tab is still marked by its chip rather than by the inactive
+   ones being faded, which is what §4 asks for anyway. */
+.card--glance[data-tab='weather'][data-mode='dark'] .glance__sub,
+.card--glance[data-tab='weather'][data-mode='dark'] .glance__tab { color: rgba(251,251,249,0.94); }
+.card--glance[data-tab='weather'][data-mode='light'] .glance__sub,
+.card--glance[data-tab='weather'][data-mode='light'] .glance__tab { color: rgba(15,42,64,0.82); }
+
+/* Rain and hail fall, from the cloud base down off the bottom of the card. */
 .wx-fall { animation-name: wxFall; animation-timing-function: linear; animation-iteration-count: infinite; }
 @keyframes wxFall {
   0% { transform: translateY(0); opacity: 0; }
-  12% { opacity: 1; }
-  100% { transform: translateY(150px); opacity: 0.2; }
+  14% { opacity: 1; }
+  100% { transform: translateY(58px); opacity: 0.15; }
+}
+
+/* Slow lateral drift for clouds and fog bands. Small amplitude on purpose:
+   the shape should look like it is moving when watched and not like it is
+   travelling when glanced at. */
+.wx-drift { animation-name: wxDrift; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+@keyframes wxDrift {
+  0%, 100% { transform: translateX(-7px); }
+  50% { transform: translateX(7px); }
+}
+
+/* One slow rotation on the sun's rays. One movement, not a movement plus a
+   pulse — see the quantity note above. */
+.wx-spin { animation: wxSpin 90s linear infinite; }
+@keyframes wxSpin { to { transform: rotate(360deg); } }
+
+/* Stars: an opacity step, not a glow. A glow is still banned. */
+.wx-twinkle { animation: wxTwinkle 4.5s ease-in-out infinite; }
+@keyframes wxTwinkle {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wx-fall { animation: none; transform: translateY(70px); }
+  .wx-fall { animation: none; transform: translateY(26px); }
+  .wx-drift, .wx-spin, .wx-twinkle { animation: none; }
+  .bellSwing { animation: none; }
 }
 
 /* ---- foot traffic: warm sunlit pavement, the office's own silhouettes ---- */
@@ -441,30 +1091,84 @@
 .card--glance[data-tab='traffic'] .glance__big { color: #3A2014; }
 .card--glance[data-tab='traffic'] .glance__tab { color: rgba(58,32,20,0.55); }
 .card--glance[data-tab='traffic'] .glance__tab.is-on { color: #3A2014; background: rgba(255,255,255,0.45); }
+.card--glance[data-tab='traffic'] .glance__tab:not(.is-on):hover { background: rgba(58,32,20,0.09); color: #3A2014; }
 .card--glance[data-tab='traffic'] .glance__tag { background: rgba(255,255,255,0.55); color: #7C3A1F; }
-.card--glance[data-tab='traffic'] .glance__sub { color: rgba(58,32,20,0.72); }
-.card--glance[data-tab='traffic'] .glance__spark i { background: rgba(58,32,20,0.32); }
-.trafficWalk { position: absolute; bottom: 14px; width: 9px; height: 20px; animation-name: walkBob, walkAcross; animation-timing-function: ease-in-out, linear; animation-iteration-count: infinite, infinite; }
-.trafficWalk::before { content: ''; position: absolute; left: 1.5px; top: 0; width: 6px; height: 6px; border-radius: 50%; background: rgba(58,32,20,0.55); }
-.trafficWalk::after { content: ''; position: absolute; left: 0; top: 7px; width: 9px; height: 12px; border-radius: 4px; background: rgba(58,32,20,0.55); }
-@keyframes walkBob { 0%, 100% { margin-top: 0; } 50% { margin-top: -2px; } }
-@keyframes walkAcross { from { left: -5%; } to { left: 105%; } }
-.trafficGround { position: absolute; left: 0; right: 0; bottom: 10px; height: 1px; background: rgba(58,32,20,0.18); }
+.card--glance[data-tab='traffic'] .glance__sub { color: rgba(58,32,20,0.82); }
+/* The type column keeps the left of this card too, so the bell and the
+   chart never meet. Same arrangement as the weather tab. */
+.card--glance[data-tab='traffic'] .glance__head,
+.card--glance[data-tab='traffic'] .glance__sub,
+.card--glance[data-tab='traffic'] .glance__traffic { max-width: 56%; }
 
-/* ---- news: editorial navy, a market line ticking behind the headline ---- */
-.card--glance[data-tab='news'] {
-  background: linear-gradient(165deg, #1C2A42 0%, #223252 45%, #2E4266 100%);
-  border-color: rgba(255,255,255,0.12);
+.trafficScene svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+/* ONE movement, and mostly rest. The bell is knocked, settles over about a
+   second and a half, and then hangs still for the remaining seven and a
+   half — §10's test is whether motion reads as considered or as a
+   screensaver, and a bell that swings without pause is the screensaver. */
+.bellSwing { animation: bellSwing 9s ease-in-out infinite; }
+@keyframes bellSwing {
+  0%    { transform: rotate(0deg); }
+  3%    { transform: rotate(9deg); }
+  7%    { transform: rotate(-7deg); }
+  11%   { transform: rotate(4.5deg); }
+  15%   { transform: rotate(-2.5deg); }
+  19%   { transform: rotate(1deg); }
+  23%   { transform: rotate(0deg); }
+  100%  { transform: rotate(0deg); }
 }
+
+/* ---- news: one ground per kind of story ---------------------------------
+   Flat, not a gradient, for the reason §10 gives the weather card: the
+   ground is the story's colour and a ramp makes it two. The gradient here
+   was also built on `#1C2A42`, which sits 0.7deg from Peregrine navy with
+   1.6 points of lightness between them, so the card read as brand chrome.
+   Hues and clearances are documented at NEWS_GROUND in `GlanceScene.tsx`
+   and checked by `npm run check:news`. */
+.card--glance[data-tab='news'] { border-color: rgba(255,255,255,0.12); }
+.card--glance[data-news='rate'] { background: #252856; }
+.card--glance[data-news='award'] { background: #3B2B4F; }
+.card--glance[data-news='council'] { background: #34383B; }
 .card--glance[data-tab='news'] .glance__big { color: #FBFBF9; }
 .card--glance[data-tab='news'] .glance__tab { color: rgba(255,255,255,0.55); }
 .card--glance[data-tab='news'] .glance__tab.is-on { color: #FBFBF9; background: rgba(255,255,255,0.14); }
-.card--glance[data-tab='news'] .glance__tag { background: rgba(128,208,184,0.2); color: #9FE6CC; }
-.card--glance[data-tab='news'] .glance__sub { color: rgba(251,251,249,0.72); }
-.newsLine { position: absolute; right: 0; bottom: 0; width: 62%; height: 70%; }
-.newsPulse { position: absolute; right: 12px; top: 26%; width: 6px; height: 6px; border-radius: 50%; background: #80D0B8; }
-.newsPulse::after { content: ''; position: absolute; inset: -5px; border-radius: 50%; border: 1.5px solid #80D0B8; animation: newsPing 2.2s ease-out infinite; }
-@keyframes newsPing { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(1.9); opacity: 0; } }
+.card--glance[data-tab='news'] .glance__tab:not(.is-on):hover { background: rgba(255,255,255,0.06); color: #FBFBF9; }
+/* The eyebrow takes its kind's accent rather than one fixed mint, so the
+   tag and the art behind it are the same story. */
+.card--glance[data-news='rate'] .glance__tag { background: rgba(143,168,232,0.20); color: #B9C8F1; }
+.card--glance[data-news='award'] .glance__tag { background: rgba(195,166,220,0.20); color: #D6BFE8; }
+.card--glance[data-news='council'] .glance__tag { background: rgba(168,176,180,0.20); color: #C4CACD; }
+/* Lifted from 0.72: the line was the one piece of this card still written in
+   an aside voice, sitting quiet under figures that are not quiet. */
+.card--glance[data-tab='news'] .glance__sub { color: rgba(251,251,249,0.92); }
+
+/* The unit belongs to the figure, so it sits on its baseline in sans and
+   lets the numeral stay the one thing in the display face. */
+.glance__unit {
+  font-size: var(--pp-size-caption); font-weight: 600;
+  color: rgba(251,251,249,0.86); margin-left: -4px;
+}
+/* The art sits in the lower right and holds still. The pinging dot that used
+   to sit here went with the squiggle: it was a second moving thing on a card
+   whose story does not change while you look at it, which is exactly the
+   quantity failure §10 names.
+
+   The box is sized so its LEFT edge clears the type column at the narrowest
+   three-across card, not just at desktop. Its contents are drawn from the
+   left of their own viewBox, so the box edge is the boundary, and 42% + a
+   14px inset is what leaves the column room once the head is stacked. */
+.newsArt { position: absolute; right: 14px; bottom: 10px; width: 42%; height: 56%; }
+
+/* Stacked, the way the weather tab stacks its temperature over its metrics.
+   The figure, its unit and a tag pill on one line came to more than half the
+   card on their own and left the art nowhere to go. */
+.card--glance[data-tab='news'] .glance__head {
+  flex-direction: column; align-items: flex-start; gap: 5px;
+}
+.card--glance[data-tab='news'] .glance__head,
+.card--glance[data-tab='news'] .glance__sub { max-width: 54%; }
+.card--glance[data-tab='news'] .glance__unit { margin-left: 0; }
+.glance__figure { display: flex; align-items: baseline; gap: 6px; }
 
 /* ------------------------------------------------------------------
    Service grid — every table down the side, the service across the top.
