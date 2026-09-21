@@ -397,8 +397,29 @@ export const INSIGHTS = [
 export type Task = {
   id: string
   who: string
+  /** The agent's actual job, not the department label. "Bookings" says
+   *  where Ruby sits; "Takes enquiries and drafts the quote" says what she
+   *  did to produce the thing waiting for you. */
+  role: string
   dept: string
+  /** Which locked department ground this card borrows. Bookings is not a
+   *  department: it lives inside Admin (design doc §10, "Booking (inside
+   *  Admin)"), so Ruby takes Admin's teal rather than a colour invented for
+   *  a department that does not exist. */
+  deptId: 'admin' | 'suppliers'
   ask: string
+  /** The system the work is actually running through, shown the way the
+   *  revenue panel's eyebrow shows it. `wired` is the honest part: `false`
+   *  means the product has no integration with it and the name is context,
+   *  not a live connection.
+   *
+   *  `open` is offered only where there is somewhere real to go. Ruby's
+   *  booking diary IS this product: `src/data` carries both adapters,
+   *  `useBookings` reads it and the run sheet renders it, so her button is
+   *  ordinary in-app navigation onto live data rather than a deep link out.
+   *  Leo has no supplier portal to open, in this product or anywhere it
+   *  talks to, so his button names the destination and stays disabled. */
+  connector: { name: string; wired: boolean; open?: 'runsheet'; openLabel: string }
   trail: { time: string; note: string }[]
   cta: string
 }
@@ -407,7 +428,10 @@ export const TASKS: Task[] = [
   {
     id: '006',
     who: 'Ruby',
+    role: 'Takes the enquiries and drafts the quote',
     dept: 'Bookings',
+    deptId: 'admin',
+    connector: { name: 'The booking diary', wired: true, open: 'runsheet', openLabel: 'Open in the booking diary' },
     ask: 'I need your help on Function quote, 18 guests, Saturday lunch',
     trail: [
       { time: '22:14', note: 'Enquiry arrived through the website form' },
@@ -419,7 +443,10 @@ export const TASKS: Task[] = [
   {
     id: '001',
     who: 'Leo',
+    role: 'Watches supplier prices and redrafts the order',
     dept: 'Suppliers & stock',
+    deptId: 'suppliers',
+    connector: { name: 'Supplier ordering portal', wired: false, openLabel: 'Open in the supplier portal' },
     ask: 'I need your help on Tomato order redrafted, tomatoes are up 34%',
     trail: [
       { time: '05:31', note: 'Price check caught roma tomatoes at $4.20 a kilo, up from $3.13' },
@@ -809,17 +836,40 @@ export const LOG: LogEntry[] = [
   { time: '05:58', dept: 'Bookings', note: '18-guest function quote drafted from the function menu at $61 a head.', done: false },
 ]
 
-export const CONTACTS = [
-  { name: 'Square', kind: 'Till & payments', detail: 'Connected · syncing every 5 minutes' },
-  { name: 'Xero', kind: 'Bookkeeping', detail: 'Connected · reconciled to yesterday' },
+/**
+ * What the brain is plugged into, and what it is not.
+ *
+ * Three of these used to read "Connected" with a sync detail behind it:
+ * Square syncing every five minutes, Xero reconciled to yesterday, Uber
+ * Eats carrying 12% of takings. None of that exists. There is no Square
+ * client, no Xero client and no delivery integration anywhere in this
+ * product; the only thing that talks to a server is the booking adapter.
+ * The figures those lines quoted came from the same fixtures the dashboard
+ * draws, so the panel was citing itself as though it were a third party.
+ *
+ * They are corrected rather than deleted. A missing row says nothing; a row
+ * that says "not connected" says the thing the owner needs to know.
+ *
+ * `live` drives the dot beside each row. Every row used to carry the same
+ * green one, so four rows sat there showing a connected signal next to the
+ * words "Not connected". A status dot that is always the same colour is not
+ * a status, it is decoration.
+ */
+export type Contact = { name: string; kind: string; detail: string; live?: boolean }
+
+export const CONTACTS: Contact[] = [
+  { name: 'Square', kind: 'Till & payments', live: false, detail: 'Not connected · takings on this dashboard are example figures' },
+  { name: 'Xero', kind: 'Bookkeeping', live: false, detail: 'Not connected · nothing is reconciled anywhere yet' },
   /* Was "Connected · 41 reviews, 4.5★", which asserted a live integration
      that does not exist and a figure nothing derived. Both now come from
      the review corpus, and the status says what is actually true. */
   {
     name: 'Google Business',
     kind: 'Reviews',
+    live: false,
     detail: `Not connected · ${ratingFor('google').count} example reviews, ${ratingFor('google').stars}★`,
   },
-  { name: 'Uber Eats', kind: 'Delivery', detail: 'Connected · 12% of takings' },
+  { name: 'Uber Eats', kind: 'Delivery', live: false, detail: 'Not connected · the 12% channel share is an example figure' },
+  /* Not an integration at all, so it carries no connection state. */
   { name: 'The Peacock', kind: 'Venue', detail: "Jenny's Café · 41 Chapel St, South Yarra" },
 ]

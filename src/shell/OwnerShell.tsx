@@ -99,7 +99,12 @@ export default function OwnerShell() {
           title: DEPT_COPY[view.id].title,
         }
       case 'revenue':
-        return { eyebrow: 'Today · The Peacock · Square till', title: 'Revenue' }
+        /* Was "Today · The Peacock · Square till". No till is connected and
+           every figure on that panel is fixture, so the eyebrow was citing a
+           system that does not exist. The venue is real, the day is real,
+           the connector was not. The panel itself now says where the numbers
+           come from. */
+        return { eyebrow: 'Today · The Peacock', title: 'Revenue' }
       case 'weather':
         return { eyebrow: 'South Yarra · seven days', title: 'Weather' }
       case 'traffic':
@@ -217,7 +222,7 @@ export default function OwnerShell() {
               resetFocus={resetFocus}
             />
           </div>
-          <TaskPanel />
+          <TaskPanel onOpenRunSheet={openRunSheet} />
         </div>
       </main>
 

@@ -290,6 +290,12 @@ export function RevenuePanel() {
         </div>
       </div>
 
+      <p className="pg__note pg__tillNote">
+        No till is connected. Every figure on this panel is an example day, and
+        the eyebrow above no longer names a system, because naming one implied
+        the numbers had come from it.
+      </p>
+
       <h3 className="pg__head">By {dim}</h3>
       <Breakdown rows={rows} total={DAY_TOTAL} />
 
@@ -865,7 +871,13 @@ export function ContactPanel() {
       <ul className="pg__rows">
         {CONTACTS.map((c) => (
           <li key={c.name}>
-            <i style={{ background: '#4FAE90' }} />
+            {/* Sage only where something is actually connected. A row with
+                no `live` at all is not an integration, so it takes the
+                neutral too rather than claiming a state it has no place in. */}
+            <i
+              className={`pg__contactDot${c.live ? ' is-live' : ''}`}
+              title={c.live === undefined ? undefined : c.live ? 'Connected' : 'Not connected'}
+            />
             <span className="pg__rowName">
               <b>{c.name}</b> · {c.kind}
             </span>
