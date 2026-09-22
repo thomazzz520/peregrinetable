@@ -197,13 +197,6 @@ const LEVITATE = 1.3;
 const WHITE = new THREE.Color("#FFFFFF");
 function toneSide(d: Dept) { return new THREE.Color(domain[d.tone]); }
 function toneTop(d: Dept) { return toneSide(d).lerp(WHITE, 0.62); }
-/** The same token as a hue in degrees, for the flat SVG and CSS surfaces
- *  that still want an hsl() string rather than a THREE.Color. */
-function toneHue(d: Dept) {
-  const hsl = { h: 0, s: 0, l: 0 };
-  toneSide(d).getHSL(hsl);
-  return Math.round(hsl.h * 360);
-}
 
 function hash(str: string) {
   let h = 2166136261;
@@ -340,8 +333,6 @@ function pick<T>(list: T[], seed: string): T {
 function Worker({ seed, position }: { seed: string; position: [number, number, number] }) {
   const upper = useRef<THREE.Group>(null);
   const head = useRef<THREE.Group>(null);
-  const armL = useRef<THREE.Group>(null);
-  const armR = useRef<THREE.Group>(null);
 
   const look = useMemo(
     () => ({
@@ -370,46 +361,21 @@ function Worker({ seed, position }: { seed: string; position: [number, number, n
     }
     // Hands at work, the two a beat apart so a room of figures doesn't pulse
     // in unison the way the old shared sine did.
-    if (armR.current) armR.current.rotation.x = -0.5 + Math.sin(t * 3.4 + p) * 0.1;
-    if (armL.current) armL.current.rotation.x = -0.5 + Math.sin(t * 3.4 + p + 1.1) * 0.1;
     // Glances, an order of magnitude slower than the hands.
     if (head.current) head.current.rotation.y = Math.sin(t * 0.23 + p) * 0.26;
   });
 
-  const arm = (side: 1 | -1, ref: React.RefObject<THREE.Group | null>) => (
-    <group position={[side * 0.118, Y.shoulder, 0]} rotation={[0, 0, side * 0.16]}>
-      <mesh castShadow geometry={FIG.upperArm} position={[0, -0.086, 0.012]} rotation={[0.34, 0, 0]}>
-        <meshStandardMaterial color={look.torso} roughness={1} flatShading />
-      </mesh>
-      <group ref={ref} position={[0, -0.158, 0.048]}>
-        <mesh castShadow geometry={FIG.forearm} position={[0, -0.072, 0]}>
-          <meshStandardMaterial color={look.torso} roughness={1} flatShading />
-        </mesh>
-        <mesh castShadow geometry={FIG.hand} position={[0, -0.138, 0]}>
-          <meshStandardMaterial color={C.bone} roughness={0.85} flatShading />
-        </mesh>
-      </group>
-    </group>
-  );
 
-  const leg = (side: 1 | -1) => (
-    <group position={[side * 0.055, 0, 0]}>
-      <mesh castShadow geometry={FIG.foot} position={[0, Y.foot, 0.026]}>
-        <meshStandardMaterial color={C.ink} roughness={0.95} flatShading />
-      </mesh>
-      <mesh castShadow geometry={FIG.shin} position={[0, Y.shin, 0]}>
-        <meshStandardMaterial color={look.leg} roughness={1} flatShading />
-      </mesh>
-      <mesh castShadow geometry={FIG.thigh} position={[0, Y.thigh, 0]}>
-        <meshStandardMaterial color={look.leg} roughness={1} flatShading />
-      </mesh>
-    </group>
-  );
 
   return (
     <group position={position} rotation={[0, look.yaw, 0]} scale={look.scale}>
-      {leg(1)}
-      {leg(-1)}
+      {/* No limbs. At island scale the arms and legs read as an insect
+          rather than a person, and the swing animation that drove them made
+          it worse. The pelvis, torso, neck and head carry the figure, and
+          the weight shift on `upper` still gives it life.
+          The limb geometry and its animation are removed rather than left
+          commented out: git holds the previous version, which is a better
+          record than dead code nobody dares delete. */}
       <group ref={upper}>
         <mesh castShadow geometry={FIG.pelvis} position={[0, Y.pelvis, 0]}>
           <meshStandardMaterial color={look.leg} roughness={1} flatShading />
@@ -420,8 +386,6 @@ function Worker({ seed, position }: { seed: string; position: [number, number, n
         <mesh castShadow geometry={FIG.neck} position={[0, Y.neck, 0]}>
           <meshStandardMaterial color={C.bone} roughness={0.9} flatShading />
         </mesh>
-        {arm(1, armR)}
-        {arm(-1, armL)}
         <group ref={head} position={[0, Y.head, 0]}>
           <mesh castShadow geometry={look.head} scale={[1, 1, 0.94]}>
             <meshStandardMaterial color={C.bone} roughness={0.85} flatShading />
@@ -1304,30 +1268,71 @@ function Island({
 /* Hub                                                                 */
 /* ------------------------------------------------------------------ */
 
-/** The department hues, so each knowledge-node in the brain can be coloured
- *  by which department's learning it represents — the same hue that
- *  department's island wears. */
-const DEPT_HUES = DEPTS.map(toneHue);
+/**
+ * The department TONES, so each knowledge-node is the colour of the plate
+ * its learning came from rather than a saturated cousin of it.
+ *
+ * This used to be `DEPTS.map(toneHue)` (now removed), keeping each token's
+ * hue and then
+ * rendering it at `hsl(hue, 62%, 54%)`. Hue is the one part of a token that
+ * survived; saturation and lightness were thrown away and replaced with two
+ * constants, so Suppliers' muted sage rendered as a bright yellow-green at
+ * s62, Roster's dusty rose as a red-orange, and nothing up here matched
+ * anything down on the floor.
+ *
+ * Deepened rather than used raw, and by `multiplyScalar` the way
+ * `nodeCloud.ts` already does it: the tokens are chosen to sit behind a
+ * whole department card, and at two pixels on the near-white office ground
+ * they wash out. Scaling darkens while holding hue and easing saturation
+ * down, which is exactly the adjustment wanted.
+ *
+ * **`multiplyScalar` works in LINEAR space, not sRGB.** `THREE.Color`
+ * converts on construction, so a factor here is much milder than the same
+ * factor applied to the hex bytes: 0.66 linear is roughly 0.83 sRGB, which
+ * is why `nodeCloud`'s 0.66 is a gentle deepening rather than the third it
+ * reads as. Measured rather than assumed, and the factors below are the
+ * mildest that clear the threshold, not round numbers:
+ *
+ *   nodes  x 0.45   3.34:1 or better on the office ground
+ *   links  x 0.57   one step lighter, so the web sits behind the nodes
+ *
+ * Checked against §2 and §11 rather than eyeballed. Every hue lands within
+ * 1.5 degrees of its token. Saturation falls to 10-26%, inside the tokens'
+ * own 17-53% range, so nothing is more saturated than the plate it came
+ * from. Nothing reads as red: Roster is h8.8 at s13, and red needs
+ * saturation well past 30. Every node clears the 3:1 a graphical object
+ * owes its ground, and every link clears 3:1 too. Finance sits at h41
+ * because Finance's token is gold at h40.7, and §2 is explicit that its
+ * gold is "a distinct, muted, deliberately different colour from yellow";
+ * at s26 it is much further from the banned band than the s62 it used to
+ * render at.
+ */
+const NODE_DEEPEN = 0.45;
+const LINK_DEEPEN = 0.57;
+const deepen = (d: Dept, k: number) =>
+  "#" + toneSide(d).clone().multiplyScalar(k).getHexString();
+const DEPT_NODE = DEPTS.map((d) => deepen(d, NODE_DEEPEN));
+const DEPT_LINK = DEPTS.map((d) => deepen(d, LINK_DEEPEN));
 
 function buildWeb() {
   let seed = 20260810;
   const rnd = () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; };
-  const cx = 65, cy = 65, nodes: { x: number; y: number; core: boolean; hue: number }[] = [];
+  const cx = 65, cy = 65, nodes: { x: number; y: number; core: boolean; dept: number }[] = [];
   for (let i = 0; i < 26; i++) {
     const a = rnd() * Math.PI * 2, r = 6 + Math.sqrt(rnd()) * 34;
-    nodes.push({ x: +(cx + Math.cos(a) * r).toFixed(1), y: +(cy + Math.sin(a) * r).toFixed(1), core: true, hue: DEPT_HUES[Math.floor(rnd() * DEPT_HUES.length)] });
+    nodes.push({ x: +(cx + Math.cos(a) * r).toFixed(1), y: +(cy + Math.sin(a) * r).toFixed(1), core: true, dept: Math.floor(rnd() * DEPT_NODE.length) });
   }
   for (let i = 0; i < 5; i++) {
     const a = rnd() * Math.PI * 2, r = 46 + rnd() * 16;
-    nodes.push({ x: +(cx + Math.cos(a) * r).toFixed(1), y: +(cy + Math.sin(a) * r).toFixed(1), core: false, hue: DEPT_HUES[Math.floor(rnd() * DEPT_HUES.length)] });
+    nodes.push({ x: +(cx + Math.cos(a) * r).toFixed(1), y: +(cy + Math.sin(a) * r).toFixed(1), core: false, dept: Math.floor(rnd() * DEPT_NODE.length) });
   }
-  const lines: { x1: number; y1: number; x2: number; y2: number; o: number; hue: number }[] = [];
+  const lines: { x1: number; y1: number; x2: number; y2: number; o: number; dept: number }[] = [];
   nodes.forEach((n, i) => {
     const near = nodes.map((m, j) => ({ j, d: Math.hypot(m.x - n.x, m.y - n.y) })).filter((o) => o.j !== i).sort((a, b) => a.d - b.d).slice(0, n.core ? 4 : 2);
-    near.forEach((o) => lines.push({ x1: n.x, y1: n.y, x2: nodes[o.j].x, y2: nodes[o.j].y, o: n.core && nodes[o.j].core ? 0.75 : 0.5, hue: n.hue }));
+    near.forEach((o) => lines.push({ x1: n.x, y1: n.y, x2: nodes[o.j].x, y2: nodes[o.j].y, o: n.core && nodes[o.j].core ? 0.75 : 0.5, dept: n.dept }));
   });
   return {
-    nodes: nodes.map((n) => ({ x: n.x, y: n.y, r: n.core ? 1.9 : 2.4, o: n.core ? 0.85 : 0.95, hue: n.hue })),
+    nodes: nodes.map((n) => ({ x: n.x, y: n.y, r: n.core ? 1.9 : 2.4, o: n.core ? 0.85 : 0.95, dept: n.dept })),
     lines,
   };
 }
@@ -1345,10 +1350,10 @@ function HubOrb({ onTap }: { onTap: () => void }) {
       >
         <svg width={150} height={150} viewBox="0 0 130 130" style={{ display: "block", animation: "aoSpin3d 78s linear infinite" }}>
           {web.lines.map((l, i) => (
-            <line key={i} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke={`hsl(${l.hue}, 50%, 52%)`} strokeOpacity={l.o} strokeWidth={0.5} />
+            <line key={i} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke={DEPT_LINK[l.dept]} strokeOpacity={l.o} strokeWidth={0.5} />
           ))}
           {web.nodes.map((n, i) => (
-            <circle key={i} cx={n.x} cy={n.y} r={n.r} fill={`hsl(${n.hue}, 62%, 54%)`} fillOpacity={n.o} />
+            <circle key={i} cx={n.x} cy={n.y} r={n.r} fill={DEPT_NODE[n.dept]} fillOpacity={n.o} />
           ))}
         </svg>
       </div>
