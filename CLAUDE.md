@@ -151,6 +151,47 @@ it needs the cleanup to land first. It was kept out of the change that
 introduced CI on purpose, so that CI arriving and the codebase going red are
 not the same event.
 
+## The menu, and what a campaign is worth
+
+`src/dashboard/menu.ts` holds a small menu (name, price, cost, and units on
+an ordinary day) and the campaign calculator that runs on it. Both live on
+the Revenue page, which the nav tab and the revenue card already shared.
+
+**The arithmetic is real; the items are authored.** Nothing in the campaign
+panel is a figure somebody typed into a card: every number is computed from
+the menu by `campaignMargin`, and the panel shows its working so the result
+can be checked rather than trusted. The items themselves are a plausible
+Tuesday, the way the rest of this demo's day is, and `unitsPerDay` is a
+stated baseline rather than a measurement, because nothing here counts
+units.
+
+**The uplift is an input, not a forecast.** A campaign asks how many more
+units you expect to sell and tells you what that assumption is worth. It
+does not predict demand, and it should not start to without that being a
+deliberate decision: demand forecasting and an hourly SKU breakdown are
+both separate, larger pieces of work.
+
+**Commission is held at zero.** No deal platform is connected, so there is
+no rate to read, and putting a plausible one in would be a made-up number
+in the middle of an otherwise real calculation. The term stays in the
+formula so that connecting a platform later changes a value rather than a
+shape. EatClub, DoorDash Deals and Too Good To Go are listed and disabled
+under §11 rule 14.
+
+**Editing is in-session.** There is no menu in `src/data`, no adapter method
+and no server route, so a price typed into the panel moves every figure that
+depends on it and then does not survive a reload. The panel says so. Making
+it persist means the same work any other stored thing needs: a model, a
+rules pass, both adapters and the routes behind them.
+
+`npm run check:menu` asserts two different kinds of claim. That the menu
+describes the same day the revenue chart does, category by category, so the
+two cannot drift into quoting different days at each other. And that the
+calculator is right, against hand-computed figures and by substituting the
+break-even uplift back in and requiring the margin change to land on zero.
+The hand-arithmetic block caught a slip the first time it ran, which is the
+argument for computing it by hand rather than calling the function twice.
+
 ## Running the server API
 
 The browser-only adapter is still the default, so `npm run dev` behaves exactly

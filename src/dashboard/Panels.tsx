@@ -10,8 +10,6 @@ import {
   HOUR_DOLLARS,
   HOUR_SHARE,
   MIX,
-  MENU_IS_WIRED,
-  perspectiveFor,
   NEWS_IS_LIVE,
   type NewsItem,
   OUTLOOK,
@@ -38,6 +36,8 @@ import {
   type Slice,
 } from './data'
 import { WeatherIcon, WeatherScene, type Weather } from './GlanceScene'
+import { MENU_IS_WIRED, perspectiveFor, MENU, type MenuItem } from './menu'
+import { Campaigns, DealHooks, MenuTable } from './RevenueCampaigns'
 
 const money = (n: number) => '$' + n.toLocaleString()
 
@@ -194,11 +194,15 @@ export function RevenuePanel() {
   const [hourAt, setHourAt] = useState<number | null>(null)
   const [costAt, setCostAt] = useState<number | null>(null)
   const [evenAt, setEvenAt] = useState<'cost' | 'kept' | null>(null)
+  /* The menu lives here rather than inside its own section, because the
+     break-even line below reads it too: edit a croissant's price and the
+     sentence that counts croissants moves with it. */
+  const [menu, setMenu] = useState<MenuItem[]>(MENU)
   const rows = dim === 'category' ? MIX : dim === 'channel' ? CHANNELS : PAYMENTS
   const peak = Math.max(...HOUR_SHARE)
   const evenPct = Math.min(100, (COST_TOTAL / DAY_TOTAL) * 100)
   const profit = DAY_TOTAL - COST_TOTAL
-  const persp = perspectiveFor(dim, COST_TOTAL, DAY_TOTAL)
+  const persp = perspectiveFor(dim, COST_TOTAL, DAY_TOTAL, menu)
 
   /**
    * What the tooltip may honestly say about one hour.
@@ -404,6 +408,14 @@ export function RevenuePanel() {
           <p className={`pg__perspFoot${MENU_IS_WIRED ? '' : ' is-stub'}`}>{persp.foot}</p>
         </div>
       </div>
+
+      {/* The menu, what a campaign does to it, and where a campaign could
+          go if anything were connected. One page, per the route merge: the
+          nav tab and the revenue card already opened the same panel, so
+          this is where it all lands rather than behind a new route. */}
+      <MenuTable menu={menu} onChange={setMenu} />
+      <Campaigns menu={menu} />
+      <DealHooks />
     </div>
   )
 }

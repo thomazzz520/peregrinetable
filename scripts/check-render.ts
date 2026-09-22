@@ -178,6 +178,34 @@ const SCENES: Scene[] = [
     ],
   },
   {
+    name: 'campaigns',
+    steps: [
+      { wait: '.card--revenue' }, `document.querySelector('.card--revenue').click()`,
+      { wait: '.pg__camp' }, 300,
+    ],
+    shot: '.pg__camps',
+    assert: [
+      /* Both bands read a variable: the accent is declared on `.pg--revenue`
+         and caution is a global token. Either resolving out of scope paints
+         nothing, which is the bug this whole check exists for. */
+      { kind: 'painted', sel: '.pg__camp[data-ahead=\'true\']::before', why: 'the ahead band would paint nothing if --rev-accent fell out of scope' },
+      { kind: 'painted', sel: '.pg__camp[data-ahead=\'false\']::before', why: 'the behind band would paint nothing if --pp-caution fell out of scope' },
+      { kind: 'distinct', a: '.pg__campFigN.is-up', b: '.pg__campFigN.is-down', min: 40, why: 'a campaign that pays and one that does not must not read the same' },
+      { kind: 'clear', a: '.pg__campName', b: '.pg__campActions', gap: 4, why: 'the edit buttons must not sit on the campaign name' },
+    ],
+  },
+  {
+    name: 'menu',
+    steps: [
+      { wait: '.card--revenue' }, `document.querySelector('.card--revenue').click()`,
+      { wait: '.pg__menu tbody tr' }, 300,
+    ],
+    shot: '.pg__menu',
+    assert: [
+      { kind: 'clear', a: '.pg__menu thead', b: '.pg__menu tbody', gap: 0, why: 'the header must not overlap the first row' },
+    ],
+  },
+  {
     name: 'reviews panel',
     steps: [{ wait: '.card--review' }, `document.querySelector('.card--review').click()`, { wait: '.pg__mentionsBar' }, 300],
     shot: '.pop__card',
@@ -505,10 +533,16 @@ async function probe(cdp: CDP, frame: Frame, p: Probe): Promise<[number, number,
 async function runAssertion(cdp: CDP, a: Assertion, where: string, frame: () => Promise<Frame>) {
   const at = (msg: string) => `${where}: ${msg}`
   if (a.kind === 'painted') {
+    /* A selector may name a pseudo-element. `querySelector` cannot return
+       one, so the `::before` is split off and handed to `getComputedStyle`
+       as its second argument instead. Without this, every band drawn as a
+       pseudo-element, which is how this product draws all of them, was
+       silently unassertable. */
+    const [base, pseudo] = a.sel.split(/(?=::)/) as [string, string | undefined]
     const bg = await cdp.eval<string | null>(`(function(){
-      var e = document.querySelector(${JSON.stringify(a.sel)});
+      var e = document.querySelector(${JSON.stringify(base)});
       if (!e) return null;
-      return getComputedStyle(e).backgroundColor;
+      return getComputedStyle(e, ${pseudo ? JSON.stringify(pseudo) : 'null'}).backgroundColor;
     })()`)
     if (bg === null) return fail(at(`${a.sel} is not on the page`))
     const transparent = bg === 'transparent' || /rgba\(\s*0,\s*0,\s*0,\s*0\s*\)/.test(bg)

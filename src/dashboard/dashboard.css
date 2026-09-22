@@ -937,6 +937,169 @@
 .pg__contactDot { background: var(--pp-line); }
 .pg__contactDot.is-live { background: var(--pp-sage-deep); }
 
+/* ---- menu, campaigns, deal hooks ---------------------------------------
+   All on the revenue page. The nav tab and the revenue card already opened
+   the same panel, so "converge on one page" meant putting this here rather
+   than behind a route of its own.
+
+   Colour stays rationed. `--rev-accent` is this panel's one accent and it
+   marks a campaign that is ahead; `--pp-caution` marks one that is behind,
+   which is what that token is for, "bad outcomes, which are not asks".
+   Nothing else on these sections carries colour. */
+
+.pg__srOnly {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+.pg__menuTotals {
+  margin-left: auto; font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--pp-ink-muted);
+}
+.pg__menu { width: 100%; border-collapse: collapse; font-size: var(--pp-size-body); }
+.pg__menu th, .pg__menu td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--pp-bone); }
+.pg__menu thead th {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro); font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--pp-ink-muted);
+  border-bottom-color: var(--pp-line);
+}
+.pg__menu tbody th { font-weight: 400; }
+.pg__menu tbody tr:last-child th, .pg__menu tbody tr:last-child td { border-bottom: 0; }
+.pg__menuNum { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pg__menuName { display: block; font-weight: 600; }
+.pg__menuCat {
+  display: block; font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--pp-ink-muted); margin-top: 2px;
+}
+.pg__menuPct {
+  display: block; font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  color: var(--pp-ink-muted); margin-top: 2px;
+}
+.pg__menu input[type='number'] {
+  width: 74px; text-align: right; padding: 5px 7px;
+  border: 1px solid var(--pp-line); border-radius: var(--pp-radius-edge);
+  background: var(--pp-panel); font: inherit; font-variant-numeric: tabular-nums;
+  color: var(--pp-ink);
+}
+.pg__menu input[type='number']:focus-visible { outline: 2px solid var(--pp-sage-deep); outline-offset: 1px; }
+/* An item that costs more than it sells for is a real problem, not a
+   pending task, so it takes caution rather than sage. */
+.pg__menu tr.is-loss .pg__menuPct { color: var(--pp-caution); font-weight: 700; }
+
+.pg__campLede { font-size: var(--pp-size-body); font-weight: 400; margin-bottom: var(--pp-space-md); }
+.pg__camps { display: grid; gap: var(--pp-space-md); }
+.pg__camp {
+  position: relative; padding: var(--pp-space-lg) var(--pp-space-xl);
+  background: rgba(248, 242, 231, 0.55);
+  border: 1px solid var(--pp-line); border-radius: var(--pp-radius-soft-card);
+}
+.pg__camp::before {
+  content: ''; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px;
+  border-radius: 0 2px 2px 0; background: var(--rev-accent);
+}
+.pg__camp[data-ahead='false']::before { background: var(--pp-caution); }
+.pg__campTop { display: flex; align-items: baseline; gap: var(--pp-space-md); flex-wrap: wrap; }
+.pg__campName { font-size: var(--pp-size-title); font-weight: 700; }
+.pg__campWhat {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--pp-ink-muted);
+}
+.pg__campActions { margin-left: auto; display: flex; gap: 6px; }
+.pg__campBtn {
+  border: 1px solid var(--pp-line); border-radius: var(--pp-radius-soft-pill);
+  background: transparent; padding: 3px 11px;
+  font: inherit; font-size: var(--pp-size-caption); color: var(--pp-ink-soft); cursor: pointer;
+}
+.pg__campBtn:hover { border-color: var(--pp-ink-muted); color: var(--pp-ink); }
+.pg__campBtn:focus-visible { outline: 2px solid var(--pp-sage-deep); outline-offset: 2px; }
+.pg__campNote { font-size: var(--pp-size-body); color: var(--pp-ink-soft); margin: 7px 0 var(--pp-space-md); max-width: 68ch; }
+
+.pg__campFigs, .pg__campPreview { display: flex; gap: var(--pp-space-xl); flex-wrap: wrap; }
+.pg__campFig { display: flex; flex-direction: column; gap: 2px; }
+.pg__campFigN {
+  font-family: var(--pp-display); font-size: var(--pp-size-display); line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+.pg__campFigN.is-up { color: var(--rev-accent); }
+.pg__campFigN.is-down { color: var(--pp-caution); }
+.pg__campFigL {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--pp-ink-muted);
+}
+
+/* The working. A computed figure people will act on should be checkable,
+   not trusted. */
+.pg__campWorking { margin: var(--pp-space-md) 0 0; font-size: var(--pp-size-caption); max-width: 60ch; }
+.pg__campWorking div { display: flex; gap: var(--pp-space-md); padding: 4px 0; }
+.pg__campWorking dt { flex: 1; color: var(--pp-ink-soft); white-space: nowrap; }
+.pg__campWorking dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+.pg__campWorking .is-total { border-top: 1px solid var(--pp-line); margin-top: 4px; padding-top: 7px; }
+.pg__campWorking .is-stub dd { font-weight: 400; color: var(--pp-ink-muted); }
+.pg__campStub {
+  margin-left: 6px; font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  padding: 1px 6px; border: 1px dashed var(--pp-line); border-radius: var(--pp-radius-soft-pill);
+}
+.pg__campBreak { font-size: var(--pp-size-body); color: var(--pp-ink-soft); margin: var(--pp-space-md) 0 0; }
+
+/* ---- the editor ---- */
+.pg__campEdit {
+  display: grid; gap: var(--pp-space-md);
+  padding: var(--pp-space-lg) var(--pp-space-xl);
+  background: rgba(248, 242, 231, 0.55);
+  border: 1px solid var(--pp-line); border-radius: var(--pp-radius-soft-card);
+}
+.pg__campRow { display: flex; gap: var(--pp-space-lg); flex-wrap: wrap; align-items: flex-end; }
+.pg__field { display: flex; flex-direction: column; gap: 5px; }
+.pg__field--wide { flex: 1; min-width: 220px; }
+.pg__field > span {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro); font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--pp-ink-muted);
+}
+.pg__field input {
+  padding: 7px 9px; border: 1px solid var(--pp-line); border-radius: var(--pp-radius-edge);
+  background: var(--pp-panel); font: inherit; color: var(--pp-ink);
+}
+.pg__field input[type='number'] { width: 110px; text-align: right; font-variant-numeric: tabular-nums; }
+.pg__field input:focus-visible { outline: 2px solid var(--pp-sage-deep); outline-offset: 1px; }
+.pg__field input:disabled { opacity: 0.55; cursor: not-allowed; border-style: dashed; }
+
+.pg__campScope { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.pg__campScope legend {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro); font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--pp-ink-muted);
+  padding: 0; margin-bottom: 7px;
+}
+.pg__chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 11px; border: 1px solid var(--pp-line);
+  border-radius: var(--pp-radius-soft-pill);
+  font-size: var(--pp-size-caption); color: var(--pp-ink-soft);
+  cursor: pointer; background: transparent;
+}
+.pg__chip input { position: absolute; opacity: 0; width: 0; height: 0; }
+.pg__chip:hover { border-color: var(--pp-ink-muted); }
+.pg__chip.is-on { background: var(--pp-ink); border-color: var(--pp-ink); color: var(--pp-paper); font-weight: 600; }
+.pg__chip:focus-within { outline: 2px solid var(--pp-sage-deep); outline-offset: 2px; }
+.pg__chipPrice { font-family: var(--pp-mono); font-size: var(--pp-size-micro); font-variant-numeric: tabular-nums; }
+
+.pg__campPreview {
+  padding-top: var(--pp-space-md); border-top: 1px solid var(--pp-line);
+}
+.pg__campEditActions { display: flex; gap: var(--pp-space-sm); }
+.pg__campEditActions .task__cta, .pg__campEditActions .task__open { width: auto; padding-left: 20px; padding-right: 20px; }
+
+/* ---- deal platforms ---- */
+.pg__deals { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--pp-space-sm); }
+.pg__deals li {
+  display: flex; align-items: center; gap: var(--pp-space-md);
+  padding: var(--pp-space-md) var(--pp-space-lg);
+  border: 1px solid var(--pp-line); border-radius: var(--pp-radius-soft-card);
+  background: rgba(248, 242, 231, 0.55);
+}
+.pg__dealName { font-size: var(--pp-size-lead); font-weight: 700; }
+.pg__dealWhat { flex: 1; font-size: var(--pp-size-caption); color: var(--pp-ink-muted); }
+.pg__deals .task__open { width: auto; flex: none; padding-left: 16px; padding-right: 16px; }
+
 /* ---- reviews panel ----------------------------------------------------
    The locked accent, declared on this panel's root the way `.pg--revenue`
    declares it. It is the same teal revenue's "today" bar carries; the
