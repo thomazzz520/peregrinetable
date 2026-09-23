@@ -7,7 +7,7 @@ import Splash from './Splash'
 import RunSheet from './RunSheet'
 import Footer from './Footer'
 import { useBookings } from './useBookings'
-import { GlanceCard, RevenueCard, ReviewCard } from '../dashboard/Cards'
+import { CampaignsCard, GlanceCard, RevenueCard, ReviewCard } from '../dashboard/Cards'
 import {
   ContactPanel,
   HistoryPanel,
@@ -19,6 +19,9 @@ import {
 } from '../dashboard/Panels'
 import VenueFloor from '../dashboard/VenueFloor'
 import { pickWeather } from '../dashboard/GlanceScene'
+import CampaignsPanel from '../dashboard/CampaignsPanel'
+import { MENU, campaignMargin, type MenuItem } from '../dashboard/menu'
+import { useCampaigns } from '../dashboard/campaignStore'
 import { NEWS, rotateNews } from '../dashboard/data'
 import TaskPanel from '../dashboard/TaskPanel'
 import '../dashboard/dashboard.css'
@@ -39,6 +42,7 @@ import '../brain/brain.css'
 type View =
   | { kind: 'dept'; id: PlatformId }
   | { kind: 'revenue' }
+  | { kind: 'campaigns' }
   | { kind: 'weather' }
   | { kind: 'traffic' }
   | { kind: 'news' }
@@ -75,6 +79,23 @@ export default function OwnerShell() {
   const [newsAt, setNewsAt] = useState(() => Math.floor(Math.random() * NEWS.length))
   const news = rotateNews(newsAt)
 
+  /* The menu is shared rather than owned by the revenue panel, because two
+     sections now compute from it: the break-even line there, and every
+     campaign figure in its own section. Editing a price in one has to move
+     the other or the two disagree about the same menu. */
+  const [menu, setMenu] = useState<MenuItem[]>(MENU)
+
+  /* Read here only for the dashboard tile. The Campaigns section owns the
+     list; this is the same stored list, not a second copy. */
+  const { list: campaigns } = useCampaigns()
+  const campTotals = campaigns.reduce(
+    (a, c) => {
+      const r = campaignMargin(c, menu)
+      return { change: a.change + r.marginChange, ahead: a.ahead + (r.marginChange >= 0 ? 1 : 0) }
+    },
+    { change: 0, ahead: 0 },
+  )
+
   const close = useCallback(() => {
     setView(null)
     setResetFocus((n) => n + 1)
@@ -98,6 +119,8 @@ export default function OwnerShell() {
           eyebrow: view.id === 'admin' ? 'Today · The Peacock' : 'Department',
           title: DEPT_COPY[view.id].title,
         }
+      case 'campaigns':
+        return { eyebrow: 'What a promotion is worth', title: 'Campaigns' }
       case 'revenue':
         /* Was "Today · The Peacock · Square till". No till is connected and
            every figure on that panel is fixture, so the eyebrow was citing a
@@ -136,8 +159,10 @@ export default function OwnerShell() {
         ) : (
           <p className="pg__lede">{DEPT_COPY[view.id].blurb}</p>
         )
+      case 'campaigns':
+        return <CampaignsPanel menu={menu} />
       case 'revenue':
-        return <RevenuePanel />
+        return <RevenuePanel menu={menu} onMenuChange={setMenu} />
       case 'weather':
         return <WeatherPanel weather={weather} />
       case 'traffic':
@@ -175,6 +200,7 @@ export default function OwnerShell() {
           {(
             [
               ['Revenue', 'revenue'],
+              ['Campaigns', 'campaigns'],
               ['History log', 'history'],
               ['Contact', 'contact'],
             ] as const
@@ -206,6 +232,12 @@ export default function OwnerShell() {
             }}
           />
           <RevenueCard onOpen={() => setView({ kind: 'revenue' })} />
+          <CampaignsCard
+            count={campaigns.length}
+            ahead={campTotals.ahead}
+            change={campTotals.change}
+            onOpen={() => setView({ kind: 'campaigns' })}
+          />
           <ReviewCard onOpen={() => setView({ kind: 'reviews' })} />
         </div>
         <div className="floor">

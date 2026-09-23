@@ -36,8 +36,8 @@ import {
   type Slice,
 } from './data'
 import { WeatherIcon, WeatherScene, type Weather } from './GlanceScene'
-import { MENU_IS_WIRED, perspectiveFor, MENU, type MenuItem } from './menu'
-import { Campaigns, DealHooks, MenuTable } from './RevenueCampaigns'
+import { MENU_IS_WIRED, perspectiveFor, type MenuItem } from './menu'
+import { MenuTable } from './RevenueCampaigns'
 
 const money = (n: number) => '$' + n.toLocaleString()
 
@@ -189,15 +189,14 @@ function Tip({ title, rows, note }: {
   )
 }
 
-export function RevenuePanel() {
+export function RevenuePanel({ menu, onMenuChange }: {
+  menu: MenuItem[]
+  onMenuChange: (next: MenuItem[]) => void
+}) {
   const [dim, setDim] = useState<'category' | 'channel' | 'payment'>('category')
   const [hourAt, setHourAt] = useState<number | null>(null)
   const [costAt, setCostAt] = useState<number | null>(null)
   const [evenAt, setEvenAt] = useState<'cost' | 'kept' | null>(null)
-  /* The menu lives here rather than inside its own section, because the
-     break-even line below reads it too: edit a croissant's price and the
-     sentence that counts croissants moves with it. */
-  const [menu, setMenu] = useState<MenuItem[]>(MENU)
   const rows = dim === 'category' ? MIX : dim === 'channel' ? CHANNELS : PAYMENTS
   const peak = Math.max(...HOUR_SHARE)
   const evenPct = Math.min(100, (COST_TOTAL / DAY_TOTAL) * 100)
@@ -409,13 +408,11 @@ export function RevenuePanel() {
         </div>
       </div>
 
-      {/* The menu, what a campaign does to it, and where a campaign could
-          go if anything were connected. One page, per the route merge: the
-          nav tab and the revenue card already opened the same panel, so
-          this is where it all lands rather than behind a new route. */}
-      <MenuTable menu={menu} onChange={setMenu} />
-      <Campaigns menu={menu} />
-      <DealHooks />
+      {/* The menu. Campaigns used to sit under it and now have a section of
+          their own, which is what lets their list outlive this panel. The
+          menu stays here because this is the page about the day's money,
+          and it is shared upward so the campaign figures follow an edit. */}
+      <MenuTable menu={menu} onChange={onMenuChange} />
     </div>
   )
 }

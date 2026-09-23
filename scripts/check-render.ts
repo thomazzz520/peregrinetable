@@ -180,7 +180,9 @@ const SCENES: Scene[] = [
   {
     name: 'campaigns',
     steps: [
-      { wait: '.card--revenue' }, `document.querySelector('.card--revenue').click()`,
+      /* Campaigns left the revenue panel for a section of their own, which
+         is what lets the list outlive the panel that draws it. */
+      { wait: '.card--campaigns' }, `document.querySelector('.card--campaigns').click()`,
       { wait: '.pg__camp' }, 300,
     ],
     shot: '.pg__camps',
@@ -200,6 +202,7 @@ const SCENES: Scene[] = [
       { wait: '.card--revenue' }, `document.querySelector('.card--revenue').click()`,
       { wait: '.pg__menu tbody tr' }, 300,
     ],
+    sentinel: '.pop__card',
     shot: '.pg__menu',
     assert: [
       { kind: 'clear', a: '.pg__menu thead', b: '.pg__menu tbody', gap: 0, why: 'the header must not overlap the first row' },

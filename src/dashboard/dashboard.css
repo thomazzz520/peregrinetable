@@ -26,9 +26,14 @@
    this one element, so none of them can end up wider than its siblings —
    the siblings are revenue and review, and revenue is what gives up the
    space. Below 1080px all three go full width and none of this applies. */
-.card--glance { flex: 2; position: relative; transition: background 600ms ease; }
-.card--revenue { flex: 2; }
-.card--review { flex: 1.1; }
+/* Four cards now, not three. The two that carry an illustration keep the
+   most room, because the weather card's figures have a measured clearance
+   from its type column and that is the thing a narrower card breaks first.
+   `check:render` asserts that clearance at two widths. */
+.card--glance { flex: 1.9; position: relative; transition: background 600ms ease; }
+.card--revenue { flex: 1.9; }
+.card--campaigns { flex: 1.15; }
+.card--review { flex: 1.05; }
 
 .card__top { display: flex; align-items: center; gap: 8px; flex: none; }
 .card__label {
@@ -257,6 +262,42 @@
 .rev__dot--today { background: var(--rev-accent); }
 .rev__dot--prior { background: var(--rev-neutral); }
 
+/* ---- campaigns card ----------------------------------------------------
+   The way in, not the destination. One figure: whether what is running is
+   worth running. It takes the revenue accent when it is, and caution when
+   it is not, which are the same two tones the campaign cards use inside. */
+.card--campaigns { --rev-accent: #266d6c; }
+.camp__count {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  letter-spacing: 0.08em; color: var(--pp-ink-muted); text-align: right;
+}
+.camp__figure { display: flex; align-items: baseline; gap: 7px; margin-top: 10px; flex: none; }
+.camp__big {
+  font-family: var(--pp-display); font-size: 30px; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.camp__big.is-up { color: var(--rev-accent); }
+.camp__big.is-down { color: var(--pp-caution); }
+.camp__unit {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--pp-ink-muted);
+}
+.camp__sub {
+  font-size: var(--pp-size-caption); line-height: 1.45;
+  color: var(--pp-ink-soft); margin: 9px 0 0; flex: 1;
+}
+
+/* An example the product seeded, not something the owner wrote. */
+.pg__campSeed {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  letter-spacing: 0.08em; color: var(--pp-ink-muted);
+  padding: 1px 7px; border: 1px dashed var(--pp-line); border-radius: var(--pp-radius-soft-pill);
+}
+.pg__campWhen {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro);
+  letter-spacing: 0.08em; color: var(--pp-ink-muted);
+}
+
 /* ---- reviews -----------------------------------------------------------
    No platform colour anywhere on this card or its panel. The stars take the
    page's own ink at two strengths, which is the same move the outlook icons
@@ -440,7 +481,7 @@
 
 @media (max-width: 1080px) {
   .dash { flex-wrap: wrap; }
-  .card--glance, .card--revenue, .card--review { flex: 1 1 100%; }
+  .card--glance, .card--revenue, .card--campaigns, .card--review { flex: 1 1 100%; }
   .floor { flex-direction: column; }
   .tasks { width: auto; padding-left: 0; }
 }
@@ -1258,7 +1299,7 @@
    three-across row produces, since the art is pinned to the right edge and
    the type has to clear it there too, not only at desktop width. */
 .card--glance[data-tab='weather'] .glance__head,
-.card--glance[data-tab='weather'] .glance__sub { max-width: 56%; }
+.card--glance[data-tab='weather'] .glance__sub { max-width: 52%; }
 
 /* Apple Weather's hierarchy, not its rendering: the temperature is the
    card's hero number and takes the display serif per §11 rule 4, and the

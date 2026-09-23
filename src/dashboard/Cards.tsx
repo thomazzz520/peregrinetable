@@ -241,6 +241,47 @@ export function RevenueCard({ onOpen }: { onOpen?: () => void }) {
 }
 
 /* ------------------------------------------------------------------ *
+ * Campaigns
+ * ------------------------------------------------------------------ */
+
+/**
+ * The way in to the Campaigns section, not the section itself.
+ *
+ * It says the one thing worth knowing at a glance: whether what you have
+ * running is worth running. Everything else is a click away.
+ */
+export function CampaignsCard({
+  count, ahead, change, onOpen,
+}: {
+  count: number
+  ahead: number
+  change: number
+  onOpen?: () => void
+}) {
+  const up = change >= 0
+  return (
+    <section className="card card--campaigns card--open" onClick={onOpen}>
+      <header className="card__top">
+        <span className="card__label">Campaigns</span>
+        <span className="camp__count">{ahead} of {count} worth running</span>
+      </header>
+
+      <div className="camp__figure">
+        <span className={`camp__big${up ? ' is-up' : ' is-down'}`}>
+          {(up ? '+' : '−') + '$' + Math.abs(Math.round(change)).toLocaleString()}
+        </span>
+        <span className="camp__unit">a day</span>
+      </div>
+
+      <p className="camp__sub">
+        What everything you have running adds up to, against leaving those
+        items alone.
+      </p>
+    </section>
+  )
+}
+
+/* ------------------------------------------------------------------ *
  * Review
  * ------------------------------------------------------------------ */
 
