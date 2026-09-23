@@ -60,11 +60,34 @@ export default function BrainChat({
   const [greeted, setGreeted] = useState(() => firstFlagged >= 0)
   const [resolved, setResolved] = useState<Record<string, boolean>>({})
 
+  /* What the owner has actually typed, per agent. Keyed so switching
+     department and back does not lose what you said to someone. */
+  const [sent, setSent] = useState<Record<string, string[]>>({})
+  const [draft, setDraft] = useState('')
+
   const person = dept.people[personIdx]!
+  const threadKey = `${dept.id}:${person.name}`
+  const mine = sent[threadKey] ?? []
+
+  /**
+   * Send what is in the box.
+   *
+   * The message is real and it stays in the thread. What does NOT happen is
+   * a reply: there is no language model in this product, and the agents
+   * speak from a fixed script rather than reading anything. So the message
+   * is shown as held, and the panel says why, rather than staging a typing
+   * indicator for an answer that is never coming.
+   */
+  function send() {
+    const text = draft.trim()
+    if (!text) return
+    setSent((m) => ({ ...m, [threadKey]: [...(m[threadKey] ?? []), text] }))
+    setDraft('')
+  }
   const msgs = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (msgs.current) msgs.current.scrollTop = msgs.current.scrollHeight
-  }, [deptId, personIdx, resolved])
+  }, [deptId, personIdx, resolved, sent])
 
   function openDept(id: string) {
     const next = depts.find((d) => d.id === id)!
@@ -171,6 +194,53 @@ export default function BrainChat({
               )}
             </div>
           </article>
+
+          {/* Anything the owner has said to this agent, and one honest note
+              about what happens to it. */}
+          {mine.map((text, i) => (
+            <article key={i} className="brain-msg brain-msg--mine">
+              <div className="brain-msg__who">{ownerName}</div>
+              <p className="brain-msg__body">{text}</p>
+            </article>
+          ))}
+          {mine.length > 0 && (
+            <p className="brain-held">
+              <b>{person.name} has {mine.length === 1 ? 'your message' : `your ${mine.length} messages`}.</b>{' '}
+              {mine.length === 1 ? 'Nothing answers it yet.' : 'Nothing answers them yet.'} There is
+              no language model wired into this product, so every agent here speaks
+              from a fixed script rather than reading what you write.{' '}
+              {mine.length === 1 ? 'It is kept' : 'They are kept'} against this
+              conversation so nothing is lost when a real one is connected.
+            </p>
+          )}
+        </div>
+
+        {/* The chips below switch agent. This is the one place you can
+            actually say something. */}
+        <div className="brain-compose">
+          <div className="brain-compose__field">
+            <label className="brain-compose__label" htmlFor="brain-draft">
+              Message {person.name}
+            </label>
+            <textarea
+              id="brain-draft"
+              rows={2}
+              value={draft}
+              placeholder={`Ask ${person.name} about ${dept.name.toLowerCase()}`}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                /* Enter sends, shift+enter makes a new line, which is what
+                   every chat box people already use does. */
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  send()
+                }
+              }}
+            />
+          </div>
+          <button type="button" className="brain-compose__send" onClick={send} disabled={!draft.trim()}>
+            Send
+          </button>
         </div>
 
         <div className="brain-chips">

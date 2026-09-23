@@ -9,13 +9,24 @@
    ------------------------------------------------------------------ */
 
 .brain-chat {
-  position: absolute;
+  /* `fixed` with a z-index above the detail popup's 100, not `absolute`
+     with none. This panel opens from two places: over the constellation at
+     /brain, where an absolutely positioned layer happened to look right,
+     and over the dashboard from the hub orb, where it did not. There it
+     took its position from whatever ancestor happened to be positioned and
+     entered no stacking context of its own, so the weather card's type and
+     the department rail sat on top of the conversation. */
+  position: fixed;
   inset: 0;
+  z-index: 120;
   display: flex;
-  /* Near-solid: at 92% the constellation showed through the message card
-     and made body text hard to read. A whisper of the cloud is enough to
-     say "you are still inside the brain". */
-  background: color-mix(in srgb, var(--pp-paper) 99%, transparent);
+  /* Fully opaque. This was 99%, deliberately, so a whisper of the
+     constellation showed through and said "you are still inside the
+     brain". That reads as a nice idea over the cloud and as a rendering
+     fault over the dashboard, where 1% is enough to make "12 Raining" and
+     a list of departments legible behind a conversation. A modal layer
+     that leaks is not a modal layer. */
+  background: var(--pp-paper);
   font-family: var(--pp-body);
   color: var(--pp-ink);
 }
@@ -216,3 +227,55 @@
 }
 .brain-scrub input { width: 190px; accent-color: var(--pp-sage-deep); }
 .brain-scrub__n { color: var(--pp-ink); font-weight: 600; min-width: 52px; }
+
+
+/* ---- the composer ------------------------------------------------------
+   The chips above switch which agent you are looking at; they were never a
+   way to say anything. This is. */
+.brain-compose {
+  display: flex; gap: var(--pp-space-sm); align-items: flex-end;
+  padding: var(--pp-space-md) var(--pp-space-lg);
+  border-top: 1px solid var(--pp-line);
+  background: var(--pp-panel);
+}
+.brain-compose__field { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.brain-compose__label {
+  font-family: var(--pp-mono); font-size: var(--pp-size-micro); font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--pp-ink-muted);
+}
+.brain-compose textarea {
+  width: 100%; resize: none; min-height: 40px;
+  padding: 9px 11px; border: 1px solid var(--pp-line);
+  border-radius: var(--pp-radius-edge); background: var(--pp-paper);
+  font: inherit; font-size: var(--pp-size-body); color: var(--pp-ink); line-height: 1.45;
+}
+.brain-compose textarea:focus-visible { outline: 2px solid var(--pp-sage-deep); outline-offset: 1px; }
+.brain-compose__send {
+  flex: none; border: 1px solid var(--pp-sage-deep); background: var(--pp-sage-deep);
+  color: var(--pp-panel); border-radius: var(--pp-radius-edge);
+  padding: 10px 18px; font: inherit; font-family: var(--pp-mono);
+  font-size: var(--pp-size-micro); font-weight: 600; letter-spacing: 0.12em;
+  text-transform: uppercase; cursor: pointer;
+}
+.brain-compose__send:hover:not(:disabled) { background: var(--pp-ink); border-color: var(--pp-ink); }
+.brain-compose__send:disabled { opacity: 0.45; cursor: not-allowed; }
+.brain-compose__send:focus-visible { outline: 2px solid var(--pp-sage-deep); outline-offset: 2px; }
+
+/* What the owner said, against what the agent said.
+   `.brain-msg` is already a bordered card, so this only changes its ground
+   and moves it right. Giving the body its own box as well nested a bubble
+   inside a card and read as two messages. */
+.brain-msg--mine {
+  margin: var(--pp-space-md) 0 0 auto;
+  max-width: 48ch;
+  background: var(--pp-bone);
+}
+.brain-msg--mine .brain-msg__who { text-align: right; }
+.brain-msg--mine .brain-msg__body { margin: 0; }
+
+/* The acknowledgement. Not a reply, and it does not pretend to be one. */
+.brain-held {
+  margin: 6px 0 0 auto; text-align: right; font-size: var(--pp-size-caption); line-height: 1.5;
+  color: var(--pp-ink-muted); max-width: 62ch;
+}
+.brain-held b { color: var(--pp-ink-soft); font-weight: 600; }
